@@ -165,12 +165,18 @@ export default function MasterTablePage() {
   }
 
   async function remove(id: string, name: string) {
-    if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+    if (!confirm(`Delete ${name}? This can't be undone.`)) return;
     try {
       await adminFetch(`/api/admin/registrations/${id}`, { method: "DELETE" });
+      // Optimistic drop for instant feedback (refreshes count + summary tiles
+      // since totals derive from `rows`).
       setRows((rs) => rs.filter((r) => r.id !== id));
+      // Resync authoritative state, incl. teams — if this player was a team's
+      // owner the FK set it to null, so the teams list must refresh too.
+      load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Delete failed.");
+      load();
     }
   }
 
