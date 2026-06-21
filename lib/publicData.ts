@@ -53,17 +53,3 @@ export async function getUpdates(): Promise<Update[]> {
   if (error) throw error;
   return (data ?? []) as Update[];
 }
-
-export interface PublicCounts {
-  registered: number;
-  paid: number;
-  drafted: number; // assigned to a team
-}
-
-export async function getCounts(players: PublicPlayer[]): Promise<PublicCounts> {
-  return {
-    registered: players.length,
-    paid: players.filter((p) => p.paid).length,
-    drafted: players.filter((p) => !!p.team_name).length,
-  };
-}

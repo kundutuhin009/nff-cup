@@ -1,26 +1,18 @@
 import AnnouncementsCarousel from "@/components/AnnouncementsCarousel";
-import { Panel, PanelTitle, StatTile } from "@/components/Panel";
+import { Panel, PanelTitle } from "@/components/Panel";
 import StandingsTable from "@/components/StandingsTable";
-import {
-  getCounts,
-  getMatches,
-  getPublicPlayers,
-  getTeams,
-  getUpdates,
-} from "@/lib/publicData";
+import { getMatches, getTeams, getUpdates } from "@/lib/publicData";
 import { standingsByGroup } from "@/lib/standings";
 import { TOURNAMENT_NAME, VENUE_NAME, VENUE_MAPS_URL } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [teams, matches, players, updates] = await Promise.all([
+  const [teams, matches, updates] = await Promise.all([
     getTeams(),
     getMatches(),
-    getPublicPlayers(),
     getUpdates(),
   ]);
-  const counts = await getCounts(players);
 
   const groupA = standingsByGroup(teams, matches, "A");
   const groupB = standingsByGroup(teams, matches, "B");
@@ -59,13 +51,6 @@ export default async function HomePage() {
             Venue: <span className="underline decoration-dotted">{VENUE_NAME}</span>
           </span>
         </a>
-      </div>
-
-      {/* Counts */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatTile label="Registered" value={counts.registered} />
-        <StatTile label="Paid" value={counts.paid} />
-        <StatTile label="Drafted" value={counts.drafted} />
       </div>
 
       {/* Updates feed — auto-rotating carousel */}
