@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PhotoModal from "@/components/admin/PhotoModal";
 import { adminFetch } from "@/lib/adminFetch";
 import { supabase } from "@/lib/supabaseClient";
 import type { Registration, Team } from "@/lib/types";
@@ -15,8 +16,13 @@ export default function AuctionPage() {
   const [rows, setRows] = useState<AdminRow[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [photoOf, setPhotoOf] = useState<AdminRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Caption for the photo modal — reg_type + position.
+  const captionOf = (p: AdminRow) =>
+    `${p.reg_type === "gk" ? "GK" : "Player"} · ${p.position ?? "—"}`;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -189,30 +195,29 @@ export default function AuctionPage() {
             {pool.map((p) => {
               const active = selected === p.id;
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => setSelected(active ? null : p.id)}
                   className={[
-                    "flex items-center gap-2 rounded-md py-1.5 pl-1.5 pr-3 text-left text-sm transition-colors",
+                    "flex items-center gap-2 rounded-md py-1.5 pl-1.5 pr-3 text-sm transition-colors",
                     active
                       ? "bg-accent text-turf-deep"
                       : "bg-turf-deep text-chalk hover:bg-turf-deep/60",
                   ].join(" ")}
                 >
-                  <PlayerPhoto
-                    src={p.photo_base64}
-                    name={p.full_name}
-                    className="h-11 w-11"
-                  />
-                  <span className="flex flex-col leading-tight">
+                  <PhotoButton p={p} size="h-11 w-11" onZoom={setPhotoOf} />
+                  <button
+                    type="button"
+                    onClick={() => setSelected(active ? null : p.id)}
+                    className="flex flex-col items-start text-left leading-tight"
+                  >
                     <span className="font-medium">{p.full_name}</span>
                     <span
                       className={`font-mono text-[10px] ${active ? "text-turf-deep/70" : "text-chalk-mut"}`}
                     >
                       {p.reg_type === "gk" ? "GK" : "Player"} · {p.position ?? "—"}
                     </span>
-                  </span>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -312,22 +317,23 @@ export default function AuctionPage() {
 
               <div className="flex flex-wrap gap-1.5">
                 {roster.map((p) => (
-                  <button
+                  <div
                     key={p.id}
-                    onClick={() => unassign(p.id)}
-                    title="Tap to remove"
-                    className="flex items-center gap-1.5 rounded bg-turf-deep py-1 pl-1 pr-2 text-xs text-chalk hover:bg-red-500/20"
+                    className="flex items-center gap-1.5 rounded bg-turf-deep py-1 pl-1 pr-2 text-xs text-chalk"
                   >
-                    <PlayerPhoto
-                      src={p.photo_base64}
-                      name={p.full_name}
-                      className="h-9 w-9"
-                    />
-                    <span>{p.full_name}</span>
-                    <span className="font-mono text-[10px] text-chalk-mut">
-                      {p.position?.[0] ?? "?"}
-                    </span>
-                  </button>
+                    <PhotoButton p={p} size="h-9 w-9" onZoom={setPhotoOf} />
+                    <button
+                      type="button"
+                      onClick={() => unassign(p.id)}
+                      title="Tap to remove"
+                      className="flex items-center gap-1.5 rounded hover:text-red-300"
+                    >
+                      <span>{p.full_name}</span>
+                      <span className="font-mono text-[10px] text-chalk-mut">
+                        {p.position?.[0] ?? "?"}
+                      </span>
+                    </button>
+                  </div>
                 ))}
                 {roster.length === 0 && (
                   <span className="text-xs text-chalk-mut">No drafted players</span>
@@ -337,31 +343,67 @@ export default function AuctionPage() {
           );
         })}
       </div>
+
+      {photoOf && (
+        <PhotoModal
+          src={photoOf.photo_base64}
+          name={photoOf.full_name}
+          caption={captionOf(photoOf)}
+          onClose={() => setPhotoOf(null)}
+        />
+      )}
     </div>
   );
 }
 
-// Player photo thumbnail (base64 already on the row — no extra fetch). Falls
-// back to a neutral tile when a player has no photo.
-function PlayerPhoto({
-  src,
-  name,
-  className,
+// Photo thumbnail that opens the zoom modal on click — a SEPARATE button from
+// the draft/remove action so the two never conflict. Base64 is already on the
+// row (no extra fetch). Falls back to a neutral tile when there's no photo.
+function PhotoButton({
+  p,
+  size,
+  onZoom,
 }: {
-  src: string | null;
-  name: string;
-  className: string;
+  p: AdminRow;
+  size: string;
+  onZoom: (p: AdminRow) => void;
 }) {
-  if (!src) {
-    return <div className={`${className} shrink-0 rounded-md bg-turf-line`} />;
-  }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={name}
-      loading="lazy"
-      className={`${className} shrink-0 rounded-md object-cover`}
-    />
+    <button
+      type="button"
+      onClick={() => onZoom(p)}
+      aria-label={`View ${p.full_name}'s photo`}
+      title="Tap to zoom"
+      className={`group relative ${size} shrink-0 overflow-hidden rounded-md`}
+    >
+      {p.photo_base64 ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={p.photo_base64}
+          alt={p.full_name}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="block h-full w-full bg-turf-line" />
+      )}
+      {/* Zoom hint badge */}
+      <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-tl bg-black/60 text-chalk">
+        <svg
+          width="9"
+          height="9"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.3-4.3" />
+        </svg>
+      </span>
+    </button>
   );
 }
