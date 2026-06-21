@@ -18,9 +18,15 @@ import {
   type RegType,
 } from "@/lib/types";
 import { feeFor } from "@/lib/pricing";
+import { OWNERS_REGISTRATION_OPEN } from "@/lib/tournament";
 
 type ImgState = { result: CompressResult | null; error: string | null; busy: boolean };
 const emptyImg: ImgState = { result: null, error: null, busy: false };
+
+// Owner self-registration is gated behind a flag (re-opens before the auction).
+const AVAILABLE_REG_TYPES: RegType[] = OWNERS_REGISTRATION_OPEN
+  ? REG_TYPES
+  : REG_TYPES.filter((rt) => rt !== "owner");
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -182,8 +188,12 @@ export default function RegisterPage() {
           {/* Registration type + live fee */}
           <div className="rounded-lg border border-lime/20 bg-lime/5 p-3">
             <span className={labelCls}>Registration Type *</span>
-            <div className="mt-1.5 grid grid-cols-3 gap-2">
-              {REG_TYPES.map((rt) => {
+            <div
+              className={`mt-1.5 grid gap-2 ${
+                AVAILABLE_REG_TYPES.length === 2 ? "grid-cols-2" : "grid-cols-3"
+              }`}
+            >
+              {AVAILABLE_REG_TYPES.map((rt) => {
                 const active = regType === rt;
                 return (
                   <button

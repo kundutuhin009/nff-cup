@@ -10,6 +10,7 @@ import {
   type RegType,
 } from "@/lib/types";
 import { feeFor } from "@/lib/pricing";
+import { OWNERS_REGISTRATION_OPEN } from "@/lib/tournament";
 
 const MAX_BYTES = 200 * 1024;
 
@@ -37,6 +38,10 @@ export async function POST(req: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Valid email required.");
   if (!/^\d{10,13}$/.test(whatsapp)) return bad("WhatsApp must be 10–13 digits.");
   if (!REG_TYPES.includes(reg_type as never)) return bad("Invalid registration type.");
+  // Owner self-registration is gated by a flag (re-opens before the auction).
+  // Don't trust the client to have hidden the Owner tile.
+  if (reg_type === "owner" && !OWNERS_REGISTRATION_OPEN)
+    return bad("Owner registration isn't open yet.");
   if (!FOOD_PREFS.includes(food_pref as never)) return bad("Invalid food preference.");
   if (!photo_base64) return bad("Player photo is required.");
   if (!payment_screenshot_base64) return bad("Payment screenshot is required.");
