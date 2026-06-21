@@ -18,7 +18,7 @@ import {
   type RegType,
 } from "@/lib/types";
 import { feeFor } from "@/lib/pricing";
-import { OWNERS_REGISTRATION_OPEN } from "@/lib/tournament";
+import { OWNERS_REGISTRATION_OPEN, PAYMENT_UPI } from "@/lib/tournament";
 
 type ImgState = { result: CompressResult | null; error: string | null; busy: boolean };
 const emptyImg: ImgState = { result: null, error: null, busy: false };
@@ -248,6 +248,12 @@ export default function RegisterPage() {
             <p className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-accent">
               Amount to pay: ₹{fee}
             </p>
+            <p className="mt-2 text-sm text-chalk">
+              Pay ₹{fee} to UPI / PhonePe / GPay:{" "}
+              <span className="select-all font-mono text-xl font-bold tracking-wider text-accent">
+                {PAYMENT_UPI}
+              </span>
+            </p>
           </div>
 
           <div>
@@ -347,12 +353,23 @@ export default function RegisterPage() {
           />
 
           {/* Payment screenshot */}
-          <ImageField
-            id="payment"
-            label={`Upload your ₹${fee} payment screenshot * (compressed in your browser)`}
-            state={payment}
-            onChange={(f) => handleImage(f, setPayment, 600, 0.65, 80 * 1024)}
-          />
+          <div className="rounded-lg border border-accent/40 bg-accent/10 p-3">
+            <p className="text-sm text-chalk">
+              Send payment to{" "}
+              <span className="select-all font-mono text-xl font-bold tracking-wider text-accent">
+                {PAYMENT_UPI}
+              </span>
+              , then upload your ₹{fee} screenshot.
+            </p>
+            <div className="mt-2">
+              <ImageField
+                id="payment"
+                label={`Upload your ₹${fee} payment screenshot * (compressed in your browser)`}
+                state={payment}
+                onChange={(f) => handleImage(f, setPayment, 600, 0.65, 80 * 1024)}
+              />
+            </div>
+          </div>
 
           {formError && (
             <p className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
