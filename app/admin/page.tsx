@@ -96,7 +96,7 @@ export default function MasterTablePage() {
       full_name: byText((r) => r.full_name),
       email: byText((r) => r.email),
       whatsapp: byText((r) => r.whatsapp),
-      position: byText((r) => r.position),
+      position: byText((r) => r.position ?? ""),
       reg_type: byText((r) => REG_TYPE_LABELS[r.reg_type]),
       fee: (a, b) => (a.fee_amount ?? 0) - (b.fee_amount ?? 0),
       food_pref: byText((r) => r.food_pref),
@@ -317,19 +317,24 @@ export default function MasterTablePage() {
                     {formatRupees(r.fee_amount)}
                   </td>
                   <td className="p-2">
-                    <select
-                      className={cellInput}
-                      value={r.position}
-                      onChange={(e) =>
-                        saveField(r.id, { position: e.target.value as Position })
-                      }
-                    >
-                      {POSITIONS.map((p) => (
-                        <option key={p} value={p} className="bg-pitch">
-                          {p}
-                        </option>
-                      ))}
-                    </select>
+                    {r.reg_type === "owner" && !r.is_playing ? (
+                      // Non-playing owner has no on-pitch position.
+                      <span className="font-mono text-xs text-zinc-500">N/A</span>
+                    ) : (
+                      <select
+                        className={cellInput}
+                        value={r.position ?? ""}
+                        onChange={(e) =>
+                          saveField(r.id, { position: e.target.value as Position })
+                        }
+                      >
+                        {POSITIONS.map((p) => (
+                          <option key={p} value={p} className="bg-pitch">
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </td>
                   <td className="p-2">
                     <select

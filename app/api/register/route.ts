@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseServer";
 import { base64Bytes } from "@/lib/imageCompress";
-import { FOOD_PREFS, POSITIONS, REG_TYPES, type RegType } from "@/lib/types";
+import {
+  FOOD_PREFS,
+  PLAYER_POSITIONS,
+  POSITIONS,
+  REG_TYPES,
+  type Position,
+  type RegType,
+} from "@/lib/types";
 import { feeFor } from "@/lib/pricing";
 
 const MAX_BYTES = 200 * 1024;
@@ -20,7 +27,7 @@ export async function POST(req: Request) {
   const email = String(body.email ?? "").trim();
   const whatsapp = String(body.whatsapp ?? "").trim();
   const reg_type = String(body.reg_type ?? "") as RegType;
-  const position = String(body.position ?? "");
+  const rawPosition = body.position == null ? "" : String(body.position);
   const food_pref = String(body.food_pref ?? "");
   const photo_base64 = String(body.photo_base64 ?? "");
   const payment_screenshot_base64 = String(body.payment_screenshot_base64 ?? "");
@@ -30,7 +37,6 @@ export async function POST(req: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Valid email required.");
   if (!/^\d{10,13}$/.test(whatsapp)) return bad("WhatsApp must be 10–13 digits.");
   if (!REG_TYPES.includes(reg_type as never)) return bad("Invalid registration type.");
-  if (!POSITIONS.includes(position as never)) return bad("Invalid position.");
   if (!FOOD_PREFS.includes(food_pref as never)) return bad("Invalid food preference.");
   if (!photo_base64) return bad("Player photo is required.");
   if (!payment_screenshot_base64) return bad("Payment screenshot is required.");
@@ -42,6 +48,25 @@ export async function POST(req: Request) {
   // Fee is derived server-side from reg_type — never trust a client amount.
   const is_playing = reg_type === "owner" ? Boolean(body.is_playing) : true;
   const fee_amount = feeFor(reg_type);
+
+  // Position depends on reg_type — normalise/validate rather than trusting the
+  // client. gk is forced to Goalkeeper; player may not be Goalkeeper; a
+  // non-playing owner has no position (null); a playing owner picks any.
+  let position: Position | null;
+  if (reg_type === "gk") {
+    position = "Goalkeeper";
+  } else if (reg_type === "player") {
+    if (!PLAYER_POSITIONS.includes(rawPosition as never))
+      return bad("Players must pick Defender, Midfielder or Forward.");
+    position = rawPosition as Position;
+  } else if (is_playing) {
+    // playing owner
+    if (!POSITIONS.includes(rawPosition as never)) return bad("Invalid position.");
+    position = rawPosition as Position;
+  } else {
+    // non-playing owner
+    position = null;
+  }
 
   // Insert registration
   const { data: reg, error: regErr } = await supabaseAdmin

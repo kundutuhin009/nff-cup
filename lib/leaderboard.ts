@@ -4,7 +4,7 @@ export interface LeaderboardRow {
   registration_id: string;
   full_name: string;
   team_name: string | null;
-  position: Position;
+  position: Position | null;
   goals: number;
   assists: number;
   clean_sheets: number;
@@ -14,7 +14,7 @@ export interface LeaderboardRow {
 export interface LeaderboardPlayer {
   id: string;
   full_name: string;
-  position: Position;
+  position: Position | null;
   team_id: string | null;
   team_name: string | null;
 }

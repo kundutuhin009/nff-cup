@@ -188,7 +188,7 @@ export default function AuctionPage() {
               >
                 {p.full_name}
                 <span className="ml-1 font-mono text-[10px] text-zinc-500">
-                  {p.position[0]}
+                  {p.position?.[0] ?? "?"}
                 </span>
               </button>
             ))}
@@ -285,7 +285,7 @@ export default function AuctionPage() {
                   >
                     {p.full_name}
                     <span className="ml-1 font-mono text-[10px] text-zinc-500">
-                      {p.position[0]}
+                      {p.position?.[0] ?? "?"}
                     </span>
                   </button>
                 ))}

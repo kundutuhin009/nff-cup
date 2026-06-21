@@ -9,6 +9,7 @@ import {
 } from "@/lib/imageCompress";
 import {
   FOOD_PREFS,
+  PLAYER_POSITIONS,
   POSITIONS,
   REG_TYPES,
   REG_TYPE_LABELS,
@@ -39,12 +40,29 @@ export default function RegisterPage() {
   // Fee is derived from the registration type (server recomputes & stores it).
   const fee = feeFor(regType);
 
-  // Picking a registration type adjusts dependent fields:
-  //  - gk defaults the football position to Goalkeeper (still editable)
-  //  - only owners can be non-playing; gk/player are always playing
+  // Position rules depend on reg_type (and, for owners, the playing toggle):
+  //  - gk            -> locked to Goalkeeper
+  //  - player        -> Defender/Midfielder/Forward only (no GK tier)
+  //  - playing owner -> any of the four
+  //  - non-playing owner -> no on-pitch position (field hidden, submit null)
+  const positionHidden = regType === "owner" && !isPlaying;
+  const positionLocked = regType === "gk";
+  const positionOptions: Position[] =
+    regType === "gk"
+      ? ["Goalkeeper"]
+      : regType === "player"
+        ? PLAYER_POSITIONS
+        : POSITIONS;
+
+  // Picking a registration type adjusts dependent fields immediately:
   function chooseRegType(next: RegType) {
     setRegType(next);
-    if (next === "gk") setPosition("Goalkeeper");
+    if (next === "gk") {
+      setPosition("Goalkeeper");
+    } else if (next === "player") {
+      // A player cannot be the GK tier — drop Goalkeeper to a sane default.
+      setPosition((p) => (p === "Goalkeeper" ? "Midfielder" : p));
+    }
     if (next !== "owner") setIsPlaying(true);
   }
 
@@ -100,7 +118,7 @@ export default function RegisterPage() {
           whatsapp: whatsapp.trim(),
           reg_type: regType,
           is_playing: regType === "owner" ? isPlaying : true,
-          position,
+          position: positionHidden ? null : position,
           food_pref: foodPref,
           photo_base64: photo.result!.dataUrl,
           payment_screenshot_base64: payment.result!.dataUrl,
@@ -256,18 +274,25 @@ export default function RegisterPage() {
               <label className={labelCls} htmlFor="position">
                 Position
               </label>
-              <select
-                id="position"
-                className={inputCls}
-                value={position}
-                onChange={(e) => setPosition(e.target.value as Position)}
-              >
-                {POSITIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+              {positionHidden ? (
+                <div className={`${inputCls} text-zinc-500`}>
+                  N/A — non-playing
+                </div>
+              ) : (
+                <select
+                  id="position"
+                  className={`${inputCls} ${positionLocked ? "opacity-60" : ""}`}
+                  value={position}
+                  disabled={positionLocked}
+                  onChange={(e) => setPosition(e.target.value as Position)}
+                >
+                  {positionOptions.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label className={labelCls} htmlFor="food">

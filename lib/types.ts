@@ -16,6 +16,9 @@ export const POSITIONS: Position[] = [
   "Midfielder",
   "Forward",
 ];
+// Outfield positions a 'player' reg_type may choose (no Goalkeeper — that's
+// the gk tier).
+export const PLAYER_POSITIONS: Position[] = ["Defender", "Midfielder", "Forward"];
 export const FOOD_PREFS: FoodPref[] = ["Veg", "Non-Veg"];
 export const ROUND_LABELS: RoundLabel[] = ["SF1", "SF2", "3RD", "FINAL"];
 
@@ -70,7 +73,7 @@ export interface PublicPlayer {
   id: string;
   full_name: string;
   photo_base64: string | null;
-  position: Position;
+  position: Position | null;
   reg_type: RegType;
   is_playing: boolean;
   paid: boolean;
@@ -85,7 +88,7 @@ export interface Registration {
   photo_base64: string | null;
   email: string;
   whatsapp: string;
-  position: Position;
+  position: Position | null;
   reg_type: RegType;
   is_playing: boolean;
   fee_amount: number | null;
