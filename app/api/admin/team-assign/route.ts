@@ -34,7 +34,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, team_id: null });
   }
 
-  // Enforce max 7 per team (ignoring this player if already on the team).
+  // Only gk/player registrations are draftable into the pool — owners run
+  // teams and are assigned separately (teams.owner_registration_id).
+  const { data: reg, error: regErr } = await supabaseAdmin
+    .from("registrations")
+    .select("reg_type")
+    .eq("id", registration_id)
+    .single();
+  if (regErr || !reg)
+    return NextResponse.json({ error: "Registration not found." }, { status: 400 });
+  if (reg.reg_type === "owner")
+    return NextResponse.json(
+      { error: "Owners are not draftable; assign them as a team owner instead." },
+      { status: 400 }
+    );
+
+  // Enforce max 7 PLAYING members. A playing owner consumes one slot, so the
+  // draftable cap is 7 minus that owner.
   const { data: existing, error: countErr } = await supabaseAdmin
     .from("team_players")
     .select("registration_id")
@@ -42,12 +58,31 @@ export async function POST(req: Request) {
   if (countErr)
     return NextResponse.json({ error: countErr.message }, { status: 500 });
 
+  const { data: team, error: teamErr } = await supabaseAdmin
+    .from("teams")
+    .select("owner_registration_id")
+    .eq("id", team_id)
+    .single();
+  if (teamErr)
+    return NextResponse.json({ error: teamErr.message }, { status: 500 });
+
+  let playingOwners = 0;
+  if (team?.owner_registration_id) {
+    const { data: owner } = await supabaseAdmin
+      .from("registrations")
+      .select("is_playing")
+      .eq("id", team.owner_registration_id)
+      .single();
+    if (owner?.is_playing) playingOwners = 1;
+  }
+
+  const capacity = MAX_PER_TEAM - playingOwners;
   const alreadyOnTeam = (existing ?? []).some(
     (e) => e.registration_id === registration_id
   );
-  if (!alreadyOnTeam && (existing?.length ?? 0) >= MAX_PER_TEAM) {
+  if (!alreadyOnTeam && (existing?.length ?? 0) >= capacity) {
     return NextResponse.json(
-      { error: `Team is full (max ${MAX_PER_TEAM}).` },
+      { error: `Team is full (max ${MAX_PER_TEAM} playing members).` },
       { status: 400 }
     );
   }

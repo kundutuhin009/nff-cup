@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TOURNAMENT_NAME, TOURNAMENT_SHORT } from "@/lib/tournament";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -18,13 +19,16 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-lime/20 bg-pitch/95 backdrop-blur">
       {/* Scoreboard-style top strip */}
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="group flex items-center gap-2">
+        <Link href="/" className="group flex min-w-0 items-center gap-2">
           <span className="font-mono text-xs text-lime/70">●</span>
           <span className="font-display text-2xl font-bold uppercase tracking-widest text-lime">
-            NFF&nbsp;Cup
+            {TOURNAMENT_SHORT}
+          </span>
+          <span className="truncate font-display text-sm font-bold uppercase tracking-wide text-zinc-200">
+            {TOURNAMENT_NAME}
           </span>
         </Link>
-        <span className="hidden font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 sm:inline">
+        <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 sm:inline">
           Floodlit&nbsp;7-a-side
         </span>
       </div>

@@ -25,7 +25,7 @@ export default function AuctionPage() {
         adminFetch<{ registrations: AdminRow[] }>("/api/admin/registrations"),
         supabase
           .from("teams")
-          .select("id, name, group_label, seed_index")
+          .select("id, name, group_label, seed_index, owner_registration_id")
           .order("group_label")
           .order("seed_index"),
       ]);
@@ -42,14 +42,32 @@ export default function AuctionPage() {
     load();
   }, [load]);
 
-  // Pool = paid AND unassigned.
+  // Pool = paid gk/player registrations that are unassigned. Owners are NOT
+  // draftable — they run teams and are assigned via the owner dropdown.
   const pool = useMemo(
-    () => rows.filter((r) => r.paid && !r.team_id),
+    () =>
+      rows.filter(
+        (r) => r.paid && !r.team_id && (r.reg_type === "gk" || r.reg_type === "player")
+      ),
     [rows]
   );
   const rosterOf = useCallback(
     (teamId: string) => rows.filter((r) => r.team_id === teamId),
     [rows]
+  );
+  const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
+  // Paid owners are the candidates for the per-team owner dropdown.
+  const owners = useMemo(
+    () => rows.filter((r) => r.reg_type === "owner" && r.paid),
+    [rows]
+  );
+  // Playing members = drafted gk/player + the owner if they're playing.
+  const playingCountOf = useCallback(
+    (teamId: string, ownerRegId: string | null) => {
+      const owner = ownerRegId ? byId.get(ownerRegId) : undefined;
+      return rosterOf(teamId).length + (owner?.is_playing ? 1 : 0);
+    },
+    [rosterOf, byId]
   );
 
   function patchLocal(id: string, patch: Partial<AdminRow>) {
@@ -58,8 +76,9 @@ export default function AuctionPage() {
 
   async function assign(teamId: string) {
     if (!selected) return;
-    if (rosterOf(teamId).length >= MAX_PER_TEAM) {
-      alert(`Team is full (max ${MAX_PER_TEAM}).`);
+    const team = teams.find((t) => t.id === teamId);
+    if (playingCountOf(teamId, team?.owner_registration_id ?? null) >= MAX_PER_TEAM) {
+      alert(`Team is full (max ${MAX_PER_TEAM} playing members).`);
       return;
     }
     const id = selected;
@@ -115,6 +134,26 @@ export default function AuctionPage() {
     }
   }
 
+  async function setOwner(id: string, owner_registration_id: string | null) {
+    try {
+      await adminFetch(`/api/admin/teams/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ owner_registration_id }),
+      });
+      // An owner belongs to one team — clear them from any other team locally.
+      setTeams((ts) =>
+        ts.map((t) => {
+          if (t.id === id) return { ...t, owner_registration_id };
+          if (owner_registration_id && t.owner_registration_id === owner_registration_id)
+            return { ...t, owner_registration_id: null };
+          return t;
+        })
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Owner change failed.");
+    }
+  }
+
   if (loading) return <p className="font-mono text-sm text-zinc-500">Loading…</p>;
   if (error) return <p className="text-sm text-red-300">{error}</p>;
 
@@ -161,7 +200,11 @@ export default function AuctionPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {teams.map((t) => {
           const roster = rosterOf(t.id);
-          const full = roster.length >= MAX_PER_TEAM;
+          const owner = t.owner_registration_id
+            ? byId.get(t.owner_registration_id)
+            : undefined;
+          const playing = playingCountOf(t.id, t.owner_registration_id);
+          const full = playing >= MAX_PER_TEAM;
           return (
             <div
               key={t.id}
@@ -186,9 +229,30 @@ export default function AuctionPage() {
                 </select>
                 <span
                   className={`font-mono text-xs ${full ? "text-red-300" : "text-zinc-500"}`}
+                  title="Playing members (drafted + playing owner)"
                 >
-                  {roster.length}/{MAX_PER_TEAM}
+                  {playing}/{MAX_PER_TEAM}
                 </span>
+              </div>
+
+              {/* Owner */}
+              <div className="mb-2 flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                  Owner
+                </span>
+                <select
+                  value={t.owner_registration_id ?? ""}
+                  onChange={(e) => setOwner(t.id, e.target.value || null)}
+                  className="min-w-0 flex-1 rounded bg-pitch px-1 py-1 text-xs text-zinc-200"
+                >
+                  <option value="">— none —</option>
+                  {owners.map((o) => (
+                    <option key={o.id} value={o.id} className="bg-pitch">
+                      {o.full_name}
+                      {o.is_playing ? "" : " (non-playing)"}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button
@@ -198,6 +262,18 @@ export default function AuctionPage() {
               >
                 {full ? "Full" : "Draft selected here"}
               </button>
+
+              {owner && (
+                <div className="mb-1.5 text-xs text-zinc-300">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-lime">
+                    Owner:
+                  </span>{" "}
+                  {owner.full_name}
+                  {!owner.is_playing && (
+                    <span className="text-zinc-500"> (non-playing)</span>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-1.5">
                 {roster.map((p) => (
@@ -214,7 +290,7 @@ export default function AuctionPage() {
                   </button>
                 ))}
                 {roster.length === 0 && (
-                  <span className="text-xs text-zinc-600">Empty</span>
+                  <span className="text-xs text-zinc-600">No drafted players</span>
                 )}
               </div>
             </div>

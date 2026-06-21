@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseServer";
 import { base64Bytes } from "@/lib/imageCompress";
-import { FOOD_PREFS, POSITIONS } from "@/lib/types";
+import { FOOD_PREFS, POSITIONS, REG_TYPES, type RegType } from "@/lib/types";
+import { feeFor } from "@/lib/pricing";
 
 const MAX_BYTES = 200 * 1024;
 
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   const full_name = String(body.full_name ?? "").trim();
   const email = String(body.email ?? "").trim();
   const whatsapp = String(body.whatsapp ?? "").trim();
+  const reg_type = String(body.reg_type ?? "") as RegType;
   const position = String(body.position ?? "");
   const food_pref = String(body.food_pref ?? "");
   const photo_base64 = String(body.photo_base64 ?? "");
@@ -27,6 +29,7 @@ export async function POST(req: Request) {
   if (!full_name) return bad("Full name is required.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Valid email required.");
   if (!/^\d{10,13}$/.test(whatsapp)) return bad("WhatsApp must be 10–13 digits.");
+  if (!REG_TYPES.includes(reg_type as never)) return bad("Invalid registration type.");
   if (!POSITIONS.includes(position as never)) return bad("Invalid position.");
   if (!FOOD_PREFS.includes(food_pref as never)) return bad("Invalid food preference.");
   if (!photo_base64) return bad("Player photo is required.");
@@ -35,6 +38,11 @@ export async function POST(req: Request) {
   if (base64Bytes(payment_screenshot_base64) > MAX_BYTES)
     return bad("Please use a smaller payment screenshot.");
 
+  // Only owners may be non-playing; gk/player are always playing.
+  // Fee is derived server-side from reg_type — never trust a client amount.
+  const is_playing = reg_type === "owner" ? Boolean(body.is_playing) : true;
+  const fee_amount = feeFor(reg_type);
+
   // Insert registration
   const { data: reg, error: regErr } = await supabaseAdmin
     .from("registrations")
@@ -42,6 +50,9 @@ export async function POST(req: Request) {
       full_name,
       email,
       whatsapp,
+      reg_type,
+      is_playing,
+      fee_amount,
       position,
       food_pref,
       photo_base64,

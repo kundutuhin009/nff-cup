@@ -1,4 +1,4 @@
-import type { Registration } from "./types";
+import { REG_TYPE_LABELS, type Registration } from "./types";
 
 function escapeCell(value: string | number | boolean | null | undefined): string {
   const s = value === null || value === undefined ? "" : String(value);
@@ -17,6 +17,9 @@ export function registrationsToCsv(
     "full_name",
     "email",
     "whatsapp",
+    "reg_type",
+    "is_playing",
+    "fee_amount",
     "position",
     "food_pref",
     "paid",
@@ -31,6 +34,9 @@ export function registrationsToCsv(
         escapeCell(r.full_name),
         escapeCell(r.email),
         escapeCell(r.whatsapp),
+        escapeCell(REG_TYPE_LABELS[r.reg_type]),
+        escapeCell(r.is_playing ? "yes" : "no"),
+        escapeCell(r.fee_amount ?? ""),
         escapeCell(r.position),
         escapeCell(r.food_pref),
         escapeCell(r.paid ? "yes" : "no"),

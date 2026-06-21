@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { supabaseAdmin } from "@/lib/supabaseServer";
-import { FOOD_PREFS, POSITIONS } from "@/lib/types";
+import { FOOD_PREFS, POSITIONS, REG_TYPES, type RegType } from "@/lib/types";
+import { feeFor } from "@/lib/pricing";
 
 // PATCH: inline-edit a registration (full_name, email, whatsapp, position,
-// food_pref, paid). Only whitelisted fields are accepted.
+// reg_type, is_playing, food_pref, paid). Only whitelisted fields are
+// accepted. Changing reg_type recomputes fee_amount server-side and forces
+// is_playing=true for non-owners.
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -43,6 +46,19 @@ export async function PATCH(
     if (!POSITIONS.includes(v as never))
       return NextResponse.json({ error: "Invalid position." }, { status: 400 });
     patch.position = v;
+  }
+  if ("reg_type" in body) {
+    const v = String(body.reg_type ?? "") as RegType;
+    if (!REG_TYPES.includes(v as never))
+      return NextResponse.json({ error: "Invalid registration type." }, { status: 400 });
+    patch.reg_type = v;
+    // Fee is derived from reg_type, recomputed here (never trusted from client).
+    patch.fee_amount = feeFor(v);
+    // Only owners may be non-playing.
+    if (v !== "owner") patch.is_playing = true;
+  }
+  if ("is_playing" in body && !("reg_type" in body && body.reg_type !== "owner")) {
+    patch.is_playing = Boolean(body.is_playing);
   }
   if ("food_pref" in body) {
     const v = String(body.food_pref ?? "");

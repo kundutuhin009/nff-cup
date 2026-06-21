@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const { data: regs, error } = await supabaseAdmin
     .from("registrations")
     .select(
-      "id, created_at, full_name, photo_base64, email, whatsapp, position, food_pref, paid"
+      "id, created_at, full_name, photo_base64, email, whatsapp, position, reg_type, is_playing, fee_amount, food_pref, paid"
     )
     .order("created_at", { ascending: true });
   if (error)

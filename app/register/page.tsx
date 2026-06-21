@@ -7,7 +7,16 @@ import {
   ImageTooLargeError,
   type CompressResult,
 } from "@/lib/imageCompress";
-import { FOOD_PREFS, POSITIONS, type FoodPref, type Position } from "@/lib/types";
+import {
+  FOOD_PREFS,
+  POSITIONS,
+  REG_TYPES,
+  REG_TYPE_LABELS,
+  type FoodPref,
+  type Position,
+  type RegType,
+} from "@/lib/types";
+import { feeFor } from "@/lib/pricing";
 
 type ImgState = { result: CompressResult | null; error: string | null; busy: boolean };
 const emptyImg: ImgState = { result: null, error: null, busy: false };
@@ -16,6 +25,8 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [regType, setRegType] = useState<RegType>("player");
+  const [isPlaying, setIsPlaying] = useState(true);
   const [position, setPosition] = useState<Position>("Midfielder");
   const [foodPref, setFoodPref] = useState<FoodPref>("Veg");
   const [photo, setPhoto] = useState<ImgState>(emptyImg);
@@ -24,6 +35,18 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Fee is derived from the registration type (server recomputes & stores it).
+  const fee = feeFor(regType);
+
+  // Picking a registration type adjusts dependent fields:
+  //  - gk defaults the football position to Goalkeeper (still editable)
+  //  - only owners can be non-playing; gk/player are always playing
+  function chooseRegType(next: RegType) {
+    setRegType(next);
+    if (next === "gk") setPosition("Goalkeeper");
+    if (next !== "owner") setIsPlaying(true);
+  }
 
   async function handleImage(
     file: File | undefined,
@@ -75,6 +98,8 @@ export default function RegisterPage() {
           full_name: fullName.trim(),
           email: email.trim(),
           whatsapp: whatsapp.trim(),
+          reg_type: regType,
+          is_playing: regType === "owner" ? isPlaying : true,
           position,
           food_pref: foodPref,
           photo_base64: photo.result!.dataUrl,
@@ -136,6 +161,52 @@ export default function RegisterPage() {
       <Panel>
         <PanelTitle>Your Details</PanelTitle>
         <form onSubmit={onSubmit} className="space-y-4">
+          {/* Registration type + live fee */}
+          <div className="rounded-lg border border-lime/20 bg-lime/5 p-3">
+            <span className={labelCls}>Registration Type *</span>
+            <div className="mt-1.5 grid grid-cols-3 gap-2">
+              {REG_TYPES.map((rt) => {
+                const active = regType === rt;
+                return (
+                  <button
+                    key={rt}
+                    type="button"
+                    onClick={() => chooseRegType(rt)}
+                    className={[
+                      "rounded-md border px-2 py-2 text-center text-sm font-semibold transition-colors",
+                      active
+                        ? "border-lime bg-lime text-pitch"
+                        : "border-white/10 bg-pitch text-zinc-200 hover:border-lime/50",
+                    ].join(" ")}
+                  >
+                    <div>{REG_TYPE_LABELS[rt]}</div>
+                    <div
+                      className={`font-mono text-[10px] ${active ? "text-pitch/70" : "text-zinc-500"}`}
+                    >
+                      ₹{feeFor(rt)}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {regType === "owner" && (
+              <label className="mt-3 flex items-center gap-2 text-sm text-zinc-200">
+                <input
+                  type="checkbox"
+                  checked={isPlaying}
+                  onChange={(e) => setIsPlaying(e.target.checked)}
+                  className="h-4 w-4 accent-lime"
+                />
+                Playing owner? (will take a squad slot)
+              </label>
+            )}
+
+            <p className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-lime">
+              Amount to pay: ₹{fee}
+            </p>
+          </div>
+
           <div>
             <label className={labelCls} htmlFor="full_name">
               Full Name *
@@ -228,7 +299,7 @@ export default function RegisterPage() {
           {/* Payment screenshot */}
           <ImageField
             id="payment"
-            label="Payment Screenshot * (compressed in your browser)"
+            label={`Upload your ₹${fee} payment screenshot * (compressed in your browser)`}
             state={payment}
             onChange={(f) => handleImage(f, setPayment, 600, 0.65, 80 * 1024)}
           />

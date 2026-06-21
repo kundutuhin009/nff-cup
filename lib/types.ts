@@ -6,6 +6,10 @@ export type GroupLabel = "A" | "B";
 export type Stage = "group" | "knockout";
 export type RoundLabel = "SF1" | "SF2" | "3RD" | "FINAL";
 
+// Registration type drives the fee and auction behaviour (distinct from the
+// football `position`). Fee amounts live in lib/pricing.ts.
+export type RegType = "owner" | "gk" | "player";
+
 export const POSITIONS: Position[] = [
   "Goalkeeper",
   "Defender",
@@ -15,11 +19,19 @@ export const POSITIONS: Position[] = [
 export const FOOD_PREFS: FoodPref[] = ["Veg", "Non-Veg"];
 export const ROUND_LABELS: RoundLabel[] = ["SF1", "SF2", "3RD", "FINAL"];
 
+export const REG_TYPES: RegType[] = ["owner", "gk", "player"];
+export const REG_TYPE_LABELS: Record<RegType, string> = {
+  owner: "Owner",
+  gk: "Goalkeeper",
+  player: "Player",
+};
+
 export interface Team {
   id: string;
   name: string;
   group_label: GroupLabel;
   seed_index: number;
+  owner_registration_id: string | null;
 }
 
 export interface TeamPlayer {
@@ -59,6 +71,8 @@ export interface PublicPlayer {
   full_name: string;
   photo_base64: string | null;
   position: Position;
+  reg_type: RegType;
+  is_playing: boolean;
   paid: boolean;
   team_name: string | null;
 }
@@ -72,6 +86,9 @@ export interface Registration {
   email: string;
   whatsapp: string;
   position: Position;
+  reg_type: RegType;
+  is_playing: boolean;
+  fee_amount: number | null;
   food_pref: FoodPref;
   paid: boolean;
 }

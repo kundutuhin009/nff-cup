@@ -14,7 +14,7 @@ import type {
 export async function getTeams(): Promise<Team[]> {
   const { data, error } = await supabase
     .from("teams")
-    .select("id, name, group_label, seed_index")
+    .select("id, name, group_label, seed_index, owner_registration_id")
     .order("group_label")
     .order("seed_index");
   if (error) throw error;
@@ -38,7 +38,9 @@ export async function getMatchStats(): Promise<MatchPlayerStat[]> {
 export async function getPublicPlayers(): Promise<PublicPlayer[]> {
   const { data, error } = await supabase
     .from("public_players")
-    .select("id, full_name, photo_base64, position, paid, team_name");
+    .select(
+      "id, full_name, photo_base64, position, reg_type, is_playing, paid, team_name"
+    );
   if (error) throw error;
   return (data ?? []) as PublicPlayer[];
 }

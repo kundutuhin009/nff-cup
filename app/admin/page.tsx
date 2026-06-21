@@ -11,11 +11,15 @@ import { byText, useSortable, type Comparator } from "@/lib/useSortable";
 import {
   FOOD_PREFS,
   POSITIONS,
+  REG_TYPES,
+  REG_TYPE_LABELS,
   type FoodPref,
   type Position,
+  type RegType,
   type Registration,
   type Team,
 } from "@/lib/types";
+import { feeFor, formatRupees } from "@/lib/pricing";
 
 interface AdminRow extends Registration {
   team_id: string | null;
@@ -36,7 +40,7 @@ export default function MasterTablePage() {
         adminFetch<{ registrations: AdminRow[] }>("/api/admin/registrations"),
         supabase
           .from("teams")
-          .select("id, name, group_label, seed_index")
+          .select("id, name, group_label, seed_index, owner_registration_id")
           .order("group_label")
           .order("seed_index"),
       ]);
@@ -59,11 +63,27 @@ export default function MasterTablePage() {
       nonVeg: rows.filter((r) => r.food_pref === "Non-Veg").length,
       paid: rows.filter((r) => r.paid).length,
       unpaid: rows.filter((r) => !r.paid).length,
+      // Money collected = sum of fee_amount across paid registrations.
+      collected: rows
+        .filter((r) => r.paid)
+        .reduce((sum, r) => sum + (r.fee_amount ?? 0), 0),
     };
   }, [rows]);
 
   const teamNameById = useMemo(
     () => new Map(teams.map((t) => [t.id, t.name])),
+    [teams]
+  );
+
+  // Owner -> the team they own (owners are assigned via teams.owner_registration_id,
+  // not the draft). Used to label owner rows in the Team column.
+  const ownedTeamByReg = useMemo(
+    () =>
+      new Map(
+        teams
+          .filter((t) => t.owner_registration_id)
+          .map((t) => [t.owner_registration_id as string, t.name])
+      ),
     [teams]
   );
 
@@ -77,6 +97,8 @@ export default function MasterTablePage() {
       email: byText((r) => r.email),
       whatsapp: byText((r) => r.whatsapp),
       position: byText((r) => r.position),
+      reg_type: byText((r) => REG_TYPE_LABELS[r.reg_type]),
+      fee: (a, b) => (a.fee_amount ?? 0) - (b.fee_amount ?? 0),
       food_pref: byText((r) => r.food_pref),
       paid: (a, b) => (a.paid === b.paid ? 0 : a.paid ? 1 : -1),
       team: (a, b) => {
@@ -106,6 +128,26 @@ export default function MasterTablePage() {
     } catch (e) {
       alert(e instanceof Error ? e.message : "Save failed.");
       load(); // resync on failure
+    }
+  }
+
+  // Changing reg_type recomputes the fee (and forces is_playing=true for
+  // non-owners) — mirror the server's derivation locally for instant feedback.
+  async function changeRegType(id: string, reg_type: RegType) {
+    const patch: Partial<Registration> = {
+      reg_type,
+      fee_amount: feeFor(reg_type),
+    };
+    if (reg_type !== "owner") patch.is_playing = true;
+    try {
+      await adminFetch(`/api/admin/registrations/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ reg_type }),
+      });
+      patchLocal(id, patch as Partial<AdminRow>);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Save failed.");
+      load();
     }
   }
 
@@ -140,7 +182,7 @@ export default function MasterTablePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "nff-cup-players.csv";
+    a.download = "nff-independence-cup-players.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -151,11 +193,12 @@ export default function MasterTablePage() {
   return (
     <div className="space-y-4">
       {/* Totals */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatTile label="Veg" value={totals.veg} />
         <StatTile label="Non-Veg" value={totals.nonVeg} />
         <StatTile label="Paid" value={totals.paid} />
         <StatTile label="Unpaid" value={totals.unpaid} />
+        <StatTile label="Collected" value={`₹${totals.collected}`} />
       </div>
 
       <div className="flex items-center justify-between">
@@ -182,6 +225,9 @@ export default function MasterTablePage() {
                 <SortableTH label="Name" sortKey="full_name" sortable={sortable} className="p-2" />
                 <SortableTH label="Email" sortKey="email" sortable={sortable} className="p-2" />
                 <SortableTH label="WhatsApp" sortKey="whatsapp" sortable={sortable} className="p-2" />
+                <SortableTH label="Reg Type" sortKey="reg_type" sortable={sortable} className="p-2" />
+                <th scope="col" className="p-2 text-center">Playing?</th>
+                <SortableTH label="Fee" sortKey="fee" sortable={sortable} align="center" className="p-2" />
                 <SortableTH label="Pos" sortKey="position" sortable={sortable} className="p-2" />
                 <SortableTH label="Food" sortKey="food_pref" sortable={sortable} className="p-2" />
                 <SortableTH label="Paid" sortKey="paid" sortable={sortable} align="center" className="p-2" />
@@ -240,6 +286,39 @@ export default function MasterTablePage() {
                   <td className="p-2">
                     <select
                       className={cellInput}
+                      value={r.reg_type}
+                      onChange={(e) =>
+                        changeRegType(r.id, e.target.value as RegType)
+                      }
+                    >
+                      {REG_TYPES.map((rt) => (
+                        <option key={rt} value={rt} className="bg-pitch">
+                          {REG_TYPE_LABELS[rt]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-2 text-center">
+                    {r.reg_type === "owner" ? (
+                      <input
+                        type="checkbox"
+                        checked={r.is_playing}
+                        onChange={(e) =>
+                          saveField(r.id, { is_playing: e.target.checked })
+                        }
+                        className="h-4 w-4 accent-lime"
+                        title="Playing owner?"
+                      />
+                    ) : (
+                      <span className="font-mono text-[10px] text-zinc-600">—</span>
+                    )}
+                  </td>
+                  <td className="p-2 text-center font-mono text-zinc-300">
+                    {formatRupees(r.fee_amount)}
+                  </td>
+                  <td className="p-2">
+                    <select
+                      className={cellInput}
                       value={r.position}
                       onChange={(e) =>
                         saveField(r.id, { position: e.target.value as Position })
@@ -276,22 +355,32 @@ export default function MasterTablePage() {
                     />
                   </td>
                   <td className="p-2">
-                    <select
-                      className={cellInput}
-                      value={r.team_id ?? ""}
-                      onChange={(e) =>
-                        assignTeam(r.id, e.target.value || null)
-                      }
-                    >
-                      <option value="" className="bg-pitch">
-                        Unassigned
-                      </option>
-                      {teams.map((t) => (
-                        <option key={t.id} value={t.id} className="bg-pitch">
-                          {t.name} ({t.group_label})
+                    {r.reg_type === "owner" ? (
+                      // Owners aren't drafted; they're assigned a team in the
+                      // auction screen (teams.owner_registration_id).
+                      <span className="font-mono text-xs text-zinc-400">
+                        {ownedTeamByReg.get(r.id)
+                          ? `Owns ${ownedTeamByReg.get(r.id)}`
+                          : "— (set in auction)"}
+                      </span>
+                    ) : (
+                      <select
+                        className={cellInput}
+                        value={r.team_id ?? ""}
+                        onChange={(e) =>
+                          assignTeam(r.id, e.target.value || null)
+                        }
+                      >
+                        <option value="" className="bg-pitch">
+                          Unassigned
                         </option>
-                      ))}
-                    </select>
+                        {teams.map((t) => (
+                          <option key={t.id} value={t.id} className="bg-pitch">
+                            {t.name} ({t.group_label})
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </td>
                   <td className="p-2 text-center">
                     <button
@@ -313,7 +402,7 @@ export default function MasterTablePage() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="p-6 text-center text-sm text-zinc-500">
+                  <td colSpan={13} className="p-6 text-center text-sm text-zinc-500">
                     No registrations yet.
                   </td>
                 </tr>

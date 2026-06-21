@@ -8,6 +8,7 @@ import {
   getUpdates,
 } from "@/lib/publicData";
 import { standingsByGroup } from "@/lib/standings";
+import { TOURNAMENT_NAME, VENUE_NAME, VENUE_MAPS_URL } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
 
@@ -37,12 +38,23 @@ export default async function HomePage() {
     <main className="space-y-5">
       {/* Hero scoreboard */}
       <div className="rounded-xl border border-lime/20 bg-gradient-to-b from-panel to-pitch p-6 text-center">
-        <h1 className="font-display text-4xl font-bold uppercase tracking-widest text-lime sm:text-5xl">
-          NFF Cup
+        <h1 className="font-display text-3xl font-bold uppercase tracking-widest text-lime sm:text-4xl">
+          {TOURNAMENT_NAME}
         </h1>
         <p className="mt-2 font-mono text-xs uppercase tracking-[0.3em] text-zinc-400">
           8 Teams · 2 Groups · One Trophy
         </p>
+        <a
+          href={VENUE_MAPS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-lime/30 bg-lime/10 px-3 py-1.5 text-sm font-semibold text-lime transition-colors hover:bg-lime/20"
+        >
+          <span aria-hidden>📍</span>
+          <span>
+            Venue: <span className="underline decoration-dotted">{VENUE_NAME}</span>
+          </span>
+        </a>
       </div>
 
       {/* Counts */}

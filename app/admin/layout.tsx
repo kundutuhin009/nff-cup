@@ -1,7 +1,7 @@
 import AdminGate from "@/components/admin/AdminGate";
 
 export const metadata = {
-  title: "NFF Cup · Admin",
+  title: "NFF Independence Cup 2.0 (Intra) · Admin",
   robots: { index: false, follow: false },
 };
 
