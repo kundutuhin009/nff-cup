@@ -194,7 +194,7 @@ export default function MasterTablePage() {
   }
 
   const cellInput =
-    "w-full min-w-[7rem] rounded border border-transparent bg-transparent px-1 py-1 text-sm hover:border-white/10 focus:border-lime focus:bg-pitch focus:outline-none";
+    "w-full min-w-[7rem] rounded border border-transparent bg-transparent px-1 py-1 text-sm hover:border-turf-line focus:border-accent focus:bg-turf-deep focus:outline-none";
 
   return (
     <div className="space-y-4">
@@ -208,12 +208,12 @@ export default function MasterTablePage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="font-mono text-xs text-zinc-500">
+        <p className="font-mono text-xs text-chalk-mut">
           {rows.length} player{rows.length === 1 ? "" : "s"}
         </p>
         <button
           onClick={downloadCsv}
-          className="rounded-md border border-lime/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-lime hover:bg-lime/10"
+          className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10"
         >
           Download CSV
         </button>
@@ -221,12 +221,12 @@ export default function MasterTablePage() {
 
       {error && <p className="text-sm text-red-300">{error}</p>}
       {loading ? (
-        <p className="font-mono text-sm text-zinc-500">Loading…</p>
+        <p className="font-mono text-sm text-chalk-mut">Loading…</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/5 bg-panel">
+        <div className="overflow-x-auto rounded-xl border border-turf-line bg-turf-panel">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="text-left font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+              <tr className="text-left font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
                 <th scope="col" className="p-2">Photo</th>
                 <SortableTH label="Name" sortKey="full_name" sortable={sortable} className="p-2" />
                 <SortableTH label="Email" sortKey="email" sortable={sortable} className="p-2" />
@@ -244,7 +244,7 @@ export default function MasterTablePage() {
             </thead>
             <tbody>
               {sortable.sortedRows.map((r) => (
-                <tr key={r.id} className="border-t border-white/5 align-middle">
+                <tr key={r.id} className="border-t border-turf-line align-middle">
                   <td className="p-2">
                     {r.photo_base64 ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -254,7 +254,7 @@ export default function MasterTablePage() {
                         className="h-10 w-10 rounded-md object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-md bg-pitch" />
+                      <div className="h-10 w-10 rounded-md bg-turf-deep" />
                     )}
                   </td>
                   <td className="p-2">
@@ -298,7 +298,7 @@ export default function MasterTablePage() {
                       }
                     >
                       {REG_TYPES.map((rt) => (
-                        <option key={rt} value={rt} className="bg-pitch">
+                        <option key={rt} value={rt} className="bg-turf-deep">
                           {REG_TYPE_LABELS[rt]}
                         </option>
                       ))}
@@ -312,20 +312,20 @@ export default function MasterTablePage() {
                         onChange={(e) =>
                           saveField(r.id, { is_playing: e.target.checked })
                         }
-                        className="h-4 w-4 accent-lime"
+                        className="h-4 w-4 accent-accent"
                         title="Playing owner?"
                       />
                     ) : (
-                      <span className="font-mono text-[10px] text-zinc-600">—</span>
+                      <span className="font-mono text-[10px] text-chalk-mut">—</span>
                     )}
                   </td>
-                  <td className="p-2 text-center font-mono text-zinc-300">
+                  <td className="p-2 text-center font-mono text-chalk">
                     {formatRupees(r.fee_amount)}
                   </td>
                   <td className="p-2">
                     {r.reg_type === "owner" && !r.is_playing ? (
-                      // Non-playing owner has no on-pitch position.
-                      <span className="font-mono text-xs text-zinc-500">N/A</span>
+                      // Non-playing owner has no on-turf-deep position.
+                      <span className="font-mono text-xs text-chalk-mut">N/A</span>
                     ) : (
                       <select
                         className={cellInput}
@@ -335,7 +335,7 @@ export default function MasterTablePage() {
                         }
                       >
                         {POSITIONS.map((p) => (
-                          <option key={p} value={p} className="bg-pitch">
+                          <option key={p} value={p} className="bg-turf-deep">
                             {p}
                           </option>
                         ))}
@@ -351,7 +351,7 @@ export default function MasterTablePage() {
                       }
                     >
                       {FOOD_PREFS.map((f) => (
-                        <option key={f} value={f} className="bg-pitch">
+                        <option key={f} value={f} className="bg-turf-deep">
                           {f}
                         </option>
                       ))}
@@ -362,14 +362,14 @@ export default function MasterTablePage() {
                       type="checkbox"
                       checked={r.paid}
                       onChange={(e) => saveField(r.id, { paid: e.target.checked })}
-                      className="h-4 w-4 accent-lime"
+                      className="h-4 w-4 accent-accent"
                     />
                   </td>
                   <td className="p-2">
                     {r.reg_type === "owner" ? (
                       // Owners aren't drafted; they're assigned a team in the
                       // auction screen (teams.owner_registration_id).
-                      <span className="font-mono text-xs text-zinc-400">
+                      <span className="font-mono text-xs text-chalk-mut">
                         {ownedTeamByReg.get(r.id)
                           ? `Owns ${ownedTeamByReg.get(r.id)}`
                           : "— (set in auction)"}
@@ -382,11 +382,11 @@ export default function MasterTablePage() {
                           assignTeam(r.id, e.target.value || null)
                         }
                       >
-                        <option value="" className="bg-pitch">
+                        <option value="" className="bg-turf-deep">
                           Unassigned
                         </option>
                         {teams.map((t) => (
-                          <option key={t.id} value={t.id} className="bg-pitch">
+                          <option key={t.id} value={t.id} className="bg-turf-deep">
                             {t.name} ({t.group_label})
                           </option>
                         ))}
@@ -396,7 +396,7 @@ export default function MasterTablePage() {
                   <td className="p-2 text-center">
                     <button
                       onClick={() => setModal({ id: r.id, name: r.full_name })}
-                      className="rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase text-zinc-300 hover:border-lime hover:text-lime"
+                      className="rounded border border-turf-line px-2 py-1 font-mono text-[10px] uppercase text-chalk hover:border-accent hover:text-accent"
                     >
                       View
                     </button>
@@ -413,7 +413,7 @@ export default function MasterTablePage() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={13} className="p-6 text-center text-sm text-zinc-500">
+                  <td colSpan={13} className="p-6 text-center text-sm text-chalk-mut">
                     No registrations yet.
                   </td>
                 </tr>

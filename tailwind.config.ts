@@ -9,16 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Floodlit-night football palette
-        pitch: "#0a0f0a", // dark pitch background
-        panel: "#111a12", // raised panels / cards
-        lime: "#b6ff3c", // single electric-lime accent
+        // "Floodlit pitch at night" palette. Single source of truth — components
+        // reference these semantic tokens, never raw hex.
+        "turf-deep": "#0c1f14", // deep turf — main background
+        "turf-panel": "#11281a", // raised panels / cards
+        "turf-line": "#2a4a36", // borders / dividers — faint pitch lines
+        chalk: "#f4f7f2", // primary text — "chalk white"
+        "chalk-mut": "#9db3a6", // muted text / labels / captions
+        accent: "#f5a623", // matchday amber — floodlights & trophy (emphasis only)
+        "accent-soft": "rgba(245,166,35,0.13)", // translucent amber for glows / hover washes
       },
       fontFamily: {
-        // Condensed display for scoreboard feel; mono for scores/numbers
+        // Condensed broadcast display; tabular mono for scores/numbers; clean body.
         display: ["var(--font-display)", "Oswald", "Impact", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
       },
     },
   },

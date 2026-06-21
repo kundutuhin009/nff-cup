@@ -111,29 +111,29 @@ export default function ResultsPage() {
     }
   }
 
-  if (loading) return <p className="font-mono text-sm text-zinc-500">Loading…</p>;
+  if (loading) return <p className="font-mono text-sm text-chalk-mut">Loading…</p>;
   if (error) return <p className="text-sm text-red-300">{error}</p>;
 
   function renderMatch(m: Match, label: string) {
     const isOpen = open === m.id;
     return (
-      <div key={m.id} className="rounded-lg border border-white/5 bg-panel p-3">
+      <div key={m.id} className="rounded-lg border border-turf-line bg-turf-panel p-3">
         <button
           onClick={() => setOpen(isOpen ? null : m.id)}
           className="flex w-full items-center justify-between gap-2 text-left"
         >
           <span className="text-sm">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
               {label}
             </span>
             <br />
             {teamName(m.home_team_id)}{" "}
-            <span className="font-mono text-lime">
+            <span className="font-mono text-accent">
               {m.played ? `${m.home_score}–${m.away_score}` : "vs"}
             </span>{" "}
             {teamName(m.away_team_id)}
           </span>
-          <span className="font-mono text-xs text-zinc-500">
+          <span className="font-mono text-xs text-chalk-mut">
             {isOpen ? "▲" : "▼"}
           </span>
         </button>
@@ -156,17 +156,17 @@ export default function ResultsPage() {
   return (
     <div className="space-y-5">
       {/* Group fixtures generator */}
-      <div className="rounded-xl border border-white/5 bg-panel p-4">
-        <h2 className="font-display text-lg uppercase tracking-wide text-lime">
+      <div className="rounded-xl border border-turf-line bg-turf-panel p-4">
+        <h2 className="font-display text-lg uppercase tracking-wide text-accent">
           Group Fixtures
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-chalk-mut">
           Generates the 12 group matches (6 per group) from the 8 teams.
         </p>
         <button
           onClick={generateFixtures}
           disabled={busy}
-          className="mt-3 rounded-md border border-lime/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-lime hover:bg-lime/10 disabled:opacity-50"
+          className="mt-3 rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10 disabled:opacity-50"
         >
           {groupMatches.length > 0 ? "Regenerate fixtures" : "Generate fixtures"}
         </button>
@@ -178,7 +178,7 @@ export default function ResultsPage() {
         if (ms.length === 0) return null;
         return (
           <div key={g} className="space-y-2">
-            <h3 className="font-display text-base uppercase tracking-wide text-zinc-300">
+            <h3 className="font-display text-base uppercase tracking-wide text-chalk">
               Group {g}
             </h3>
             {ms.map((m) => renderMatch(m, `Group ${g}`))}
@@ -187,15 +187,15 @@ export default function ResultsPage() {
       })}
 
       {/* Knockouts */}
-      <div className="rounded-xl border border-white/5 bg-panel p-4">
-        <h2 className="font-display text-lg uppercase tracking-wide text-lime">
+      <div className="rounded-xl border border-turf-line bg-turf-panel p-4">
+        <h2 className="font-display text-lg uppercase tracking-wide text-accent">
           Add Knockout Match
         </h2>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <select
             value={newRound}
             onChange={(e) => setNewRound(e.target.value as RoundLabel)}
-            className="rounded border border-white/10 bg-pitch px-2 py-1 text-sm"
+            className="rounded border border-turf-line bg-turf-deep px-2 py-1 text-sm"
           >
             {ROUND_LABELS.map((r) => (
               <option key={r} value={r}>
@@ -206,7 +206,7 @@ export default function ResultsPage() {
           <button
             onClick={addKnockout}
             disabled={busy}
-            className="rounded-md border border-lime/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-lime hover:bg-lime/10 disabled:opacity-50"
+            className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10 disabled:opacity-50"
           >
             Add
           </button>
@@ -215,7 +215,7 @@ export default function ResultsPage() {
 
       {knockoutMatches.length > 0 && (
         <div className="space-y-2">
-          <h3 className="font-display text-base uppercase tracking-wide text-zinc-300">
+          <h3 className="font-display text-base uppercase tracking-wide text-chalk">
             Knockouts
           </h3>
           {knockoutMatches.map((m) =>

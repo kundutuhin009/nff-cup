@@ -29,10 +29,10 @@ export default function SortableTH<T>({
       <button
         type="button"
         onClick={() => sortable.toggleSort(sortKey)}
-        className={`inline-flex w-full items-center gap-1 ${justify} rounded px-0.5 py-0.5 uppercase tracking-widest hover:text-lime focus-visible:text-lime`}
+        className={`inline-flex w-full items-center gap-1 ${justify} rounded px-0.5 py-0.5 uppercase tracking-widest hover:text-accent focus-visible:text-accent`}
       >
         <span>{label}</span>
-        <span aria-hidden="true" className="w-2 text-lime">
+        <span aria-hidden="true" className="w-2 text-accent">
           {indicator}
         </span>
       </button>

@@ -16,19 +16,19 @@ export default function SiteHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-lime/20 bg-pitch/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-accent/20 bg-turf-deep/95 backdrop-blur">
       {/* Scoreboard-style top strip */}
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="group flex min-w-0 items-center gap-2">
-          <span className="font-mono text-xs text-lime/70">●</span>
-          <span className="font-display text-2xl font-bold uppercase tracking-widest text-lime">
+          <span className="font-mono text-xs text-accent/70">●</span>
+          <span className="font-display text-2xl font-bold uppercase tracking-widest text-accent">
             {TOURNAMENT_SHORT}
           </span>
-          <span className="truncate font-display text-sm font-bold uppercase tracking-wide text-zinc-200">
+          <span className="truncate font-display text-sm font-bold uppercase tracking-wide text-chalk">
             {TOURNAMENT_NAME}
           </span>
         </Link>
-        <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500 sm:inline">
+        <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.3em] text-chalk-mut sm:inline">
           Floodlit&nbsp;7-a-side
         </span>
       </div>
@@ -47,8 +47,8 @@ export default function SiteHeader() {
                   className={[
                     "block rounded-md px-3 py-1.5 font-display text-sm uppercase tracking-wide transition-colors",
                     active
-                      ? "bg-lime text-pitch"
-                      : "text-zinc-300 hover:bg-panel hover:text-lime",
+                      ? "bg-accent text-turf-deep"
+                      : "text-chalk hover:bg-turf-panel hover:text-accent",
                   ].join(" ")}
                 >
                   {l.label}

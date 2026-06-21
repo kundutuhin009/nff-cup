@@ -34,23 +34,23 @@ export default function ScreenshotModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] max-w-lg overflow-auto rounded-xl border border-white/10 bg-panel p-4"
+        className="max-h-[90vh] max-w-lg overflow-auto rounded-xl border border-turf-line bg-turf-panel p-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-display text-lg uppercase tracking-wide text-lime">
+          <h3 className="font-display text-lg uppercase tracking-wide text-accent">
             {playerName} · Payment
           </h3>
           <button
             onClick={onClose}
-            className="font-mono text-xs uppercase text-zinc-400 hover:text-lime"
+            className="font-mono text-xs uppercase text-chalk-mut hover:text-accent"
           >
             Close
           </button>
         </div>
         {error && <p className="text-sm text-red-300">{error}</p>}
         {!src && !error && (
-          <p className="text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-chalk-mut">Loading…</p>
         )}
         {src && (
           // eslint-disable-next-line @next/next/no-img-element

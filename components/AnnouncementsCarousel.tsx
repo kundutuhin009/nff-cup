@@ -29,7 +29,7 @@ function shuffle<T>(arr: T[]): T[] {
 function Slide({ u }: { u: Update }) {
   return (
     <>
-      <div className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+      <div className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
         {formatDate(u.created_at)}
       </div>
       {u.image_url && (
@@ -38,12 +38,12 @@ function Slide({ u }: { u: Update }) {
           src={u.image_url}
           alt={u.body ?? "Announcement"}
           loading="lazy"
-          className="mt-2 min-h-0 w-full flex-1 rounded-lg border border-white/10 bg-pitch object-contain"
+          className="mt-2 min-h-0 w-full flex-1 rounded-lg border border-turf-line bg-turf-deep object-contain"
         />
       )}
       {u.body && (
         <p
-          className={`mt-2 overflow-auto whitespace-pre-wrap text-sm text-zinc-200 ${
+          className={`mt-2 overflow-auto whitespace-pre-wrap text-sm text-chalk ${
             u.image_url ? "" : "flex-1"
           }`}
         >
@@ -96,13 +96,13 @@ export default function AnnouncementsCarousel({
   }, [reduced, paused, count]);
 
   if (count === 0) {
-    return <p className="text-sm text-zinc-500">No announcements yet.</p>;
+    return <p className="text-sm text-chalk-mut">No announcements yet.</p>;
   }
 
   // A carousel of one is silly — show it statically, no controls/animation.
   if (count === 1) {
     return (
-      <div className="flex flex-col border-l-2 border-lime/40 pl-3">
+      <div className="flex flex-col border-l-2 border-accent/40 pl-3">
         <Slide u={order[0]} />
       </div>
     );
@@ -123,7 +123,7 @@ export default function AnnouncementsCarousel({
           <div
             key={u.id}
             aria-hidden={i !== index}
-            className={`absolute inset-0 flex flex-col border-l-2 border-lime/40 pl-3 ${fade} ${
+            className={`absolute inset-0 flex flex-col border-l-2 border-accent/40 pl-3 ${fade} ${
               i === index ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           >
@@ -136,7 +136,7 @@ export default function AnnouncementsCarousel({
           type="button"
           aria-label="Previous announcement"
           onClick={() => go(index - 1)}
-          className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-pitch/80 px-2 py-1 text-lime backdrop-blur transition-colors hover:border-lime hover:bg-pitch"
+          className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full border border-turf-line bg-turf-deep/80 px-2 py-1 text-accent backdrop-blur transition-colors hover:border-accent hover:bg-turf-deep"
         >
           ‹
         </button>
@@ -144,7 +144,7 @@ export default function AnnouncementsCarousel({
           type="button"
           aria-label="Next announcement"
           onClick={() => go(index + 1)}
-          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-pitch/80 px-2 py-1 text-lime backdrop-blur transition-colors hover:border-lime hover:bg-pitch"
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full border border-turf-line bg-turf-deep/80 px-2 py-1 text-accent backdrop-blur transition-colors hover:border-accent hover:bg-turf-deep"
         >
           ›
         </button>
@@ -160,7 +160,7 @@ export default function AnnouncementsCarousel({
             aria-current={i === index ? "true" : undefined}
             onClick={() => go(i)}
             className={`h-2 w-2 rounded-full transition-colors ${
-              i === index ? "bg-lime" : "bg-zinc-600 hover:bg-zinc-400"
+              i === index ? "bg-accent" : "bg-chalk-mut/40 hover:bg-chalk-mut"
             }`}
           />
         ))}

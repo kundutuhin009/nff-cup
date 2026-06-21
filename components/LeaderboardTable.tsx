@@ -28,7 +28,7 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="font-mono text-[10px] text-zinc-500">
+          <tr className="font-mono text-[10px] text-chalk-mut">
             <th scope="col" className="py-2 pr-2 text-left">
               #
             </th>
@@ -38,20 +38,20 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
             </th>
             <SortableTH label="G" sortKey="goals" sortable={sortable} align="center" className="px-1" />
             <SortableTH label="A" sortKey="assists" sortable={sortable} align="center" className="px-1" />
-            <SortableTH label="Pts" sortKey="score" sortable={sortable} align="center" className="px-1 text-lime" />
+            <SortableTH label="Pts" sortKey="score" sortable={sortable} align="center" className="px-1 text-accent" />
           </tr>
         </thead>
         <tbody className="font-mono">
           {sortable.sortedRows.map((r) => (
-            <tr key={r.registration_id} className="border-t border-white/5">
-              <td className="py-2 pr-2 text-zinc-500">{r.__rank}</td>
+            <tr key={r.registration_id} className="border-t border-turf-line">
+              <td className="py-2 pr-2 text-chalk-mut">{r.__rank}</td>
               <td className="py-2 pr-2 font-sans">{r.full_name}</td>
-              <td className="py-2 pr-2 font-sans text-zinc-400">
+              <td className="py-2 pr-2 font-sans text-chalk-mut">
                 {r.team_name ?? "—"}
               </td>
               <td className="px-1 text-center">{r.goals}</td>
               <td className="px-1 text-center">{r.assists}</td>
-              <td className="px-1 text-center font-bold text-lime">{r.score}</td>
+              <td className="px-1 text-center font-bold text-accent">{r.score}</td>
             </tr>
           ))}
         </tbody>

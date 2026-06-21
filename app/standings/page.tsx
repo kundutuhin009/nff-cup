@@ -12,10 +12,10 @@ export default async function StandingsPage() {
 
   return (
     <main className="space-y-5">
-      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
+      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
         Standings
       </h1>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
         Top 2 of each group advance · Win 3 · Draw 1
       </p>
 

@@ -165,23 +165,23 @@ export default function AuctionPage() {
     }
   }
 
-  if (loading) return <p className="font-mono text-sm text-zinc-500">Loading…</p>;
+  if (loading) return <p className="font-mono text-sm text-chalk-mut">Loading…</p>;
   if (error) return <p className="text-sm text-red-300">{error}</p>;
 
   return (
     <div className="space-y-5">
-      <p className="font-mono text-xs text-zinc-500">
+      <p className="font-mono text-xs text-chalk-mut">
         Tap a player in the pool, then tap a team to draft them. Tap a drafted
         player to send them back to the pool.
       </p>
 
       {/* Pool */}
-      <div className="rounded-xl border border-white/5 bg-panel p-4">
-        <h2 className="mb-2 font-display text-lg uppercase tracking-wide text-lime">
-          Pool · {pool.length} <span className="text-xs text-zinc-500">(paid & unassigned)</span>
+      <div className="rounded-xl border border-turf-line bg-turf-panel p-4">
+        <h2 className="mb-2 font-display text-lg uppercase tracking-wide text-accent">
+          Pool · {pool.length} <span className="text-xs text-chalk-mut">(paid & unassigned)</span>
         </h2>
         {pool.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-chalk-mut">
             No paid, unassigned players left.
           </p>
         ) : (
@@ -193,12 +193,12 @@ export default function AuctionPage() {
                 className={[
                   "rounded-md px-3 py-1.5 text-sm transition-colors",
                   selected === p.id
-                    ? "bg-lime text-pitch"
-                    : "bg-pitch text-zinc-200 hover:bg-pitch/60",
+                    ? "bg-accent text-turf-deep"
+                    : "bg-turf-deep text-chalk hover:bg-turf-deep/60",
                 ].join(" ")}
               >
                 {p.full_name}
-                <span className="ml-1 font-mono text-[10px] text-zinc-500">
+                <span className="ml-1 font-mono text-[10px] text-chalk-mut">
                   {p.position?.[0] ?? "?"}
                 </span>
               </button>
@@ -223,7 +223,7 @@ export default function AuctionPage() {
           return (
             <div
               key={t.id}
-              className="rounded-xl border border-white/5 bg-panel p-3"
+              className="rounded-xl border border-turf-line bg-turf-panel p-3"
             >
               <div className="mb-2 flex items-center gap-2">
                 <input
@@ -240,18 +240,18 @@ export default function AuctionPage() {
                       (e.target as HTMLInputElement).blur();
                     }
                   }}
-                  className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-1 font-display text-base uppercase text-lime hover:border-white/10 focus:border-lime focus:bg-pitch focus:outline-none"
+                  className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-1 font-display text-base uppercase text-accent hover:border-turf-line focus:border-accent focus:bg-turf-deep focus:outline-none"
                 />
                 <select
                   value={t.group_label}
                   onChange={(e) => setGroup(t.id, e.target.value as "A" | "B")}
-                  className="rounded bg-pitch px-1 py-1 font-mono text-xs text-zinc-300"
+                  className="rounded bg-turf-deep px-1 py-1 font-mono text-xs text-chalk"
                 >
                   <option value="A">A</option>
                   <option value="B">B</option>
                 </select>
                 <span
-                  className={`font-mono text-xs ${full ? "text-red-300" : "text-zinc-500"}`}
+                  className={`font-mono text-xs ${full ? "text-red-300" : "text-chalk-mut"}`}
                   title="Playing members (drafted + playing owner)"
                 >
                   {playing}/{MAX_PER_TEAM}
@@ -260,17 +260,17 @@ export default function AuctionPage() {
 
               {/* Owner */}
               <div className="mb-2 flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
                   Owner
                 </span>
                 <select
                   value={t.owner_registration_id ?? ""}
                   onChange={(e) => setOwner(t.id, e.target.value || null)}
-                  className="min-w-0 flex-1 rounded bg-pitch px-1 py-1 text-xs text-zinc-200"
+                  className="min-w-0 flex-1 rounded bg-turf-deep px-1 py-1 text-xs text-chalk"
                 >
                   <option value="">— none —</option>
                   {availableOwners.map((o) => (
-                    <option key={o.id} value={o.id} className="bg-pitch">
+                    <option key={o.id} value={o.id} className="bg-turf-deep">
                       {o.full_name}
                       {o.is_playing ? "" : " (non-playing)"}
                     </option>
@@ -281,19 +281,19 @@ export default function AuctionPage() {
               <button
                 disabled={!selected || full}
                 onClick={() => assign(t.id)}
-                className="mb-2 w-full rounded-md border border-lime/40 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-lime disabled:opacity-30"
+                className="mb-2 w-full rounded-md border border-accent/40 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-accent disabled:opacity-30"
               >
                 {full ? "Full" : "Draft selected here"}
               </button>
 
               {owner && (
-                <div className="mb-1.5 text-xs text-zinc-300">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-lime">
+                <div className="mb-1.5 text-xs text-chalk">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-accent">
                     Owner:
                   </span>{" "}
                   {owner.full_name}
                   {!owner.is_playing && (
-                    <span className="text-zinc-500"> (non-playing)</span>
+                    <span className="text-chalk-mut"> (non-playing)</span>
                   )}
                 </div>
               )}
@@ -304,16 +304,16 @@ export default function AuctionPage() {
                     key={p.id}
                     onClick={() => unassign(p.id)}
                     title="Tap to remove"
-                    className="rounded bg-pitch px-2 py-1 text-xs text-zinc-200 hover:bg-red-500/20"
+                    className="rounded bg-turf-deep px-2 py-1 text-xs text-chalk hover:bg-red-500/20"
                   >
                     {p.full_name}
-                    <span className="ml-1 font-mono text-[10px] text-zinc-500">
+                    <span className="ml-1 font-mono text-[10px] text-chalk-mut">
                       {p.position?.[0] ?? "?"}
                     </span>
                   </button>
                 ))}
                 {roster.length === 0 && (
-                  <span className="text-xs text-zinc-600">No drafted players</span>
+                  <span className="text-xs text-chalk-mut">No drafted players</span>
                 )}
               </div>
             </div>

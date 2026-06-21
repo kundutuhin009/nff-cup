@@ -52,7 +52,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
 
   if (checking) {
     return (
-      <div className="py-20 text-center font-mono text-sm text-zinc-500">
+      <div className="py-20 text-center font-mono text-sm text-chalk-mut">
         Checking access…
       </div>
     );
@@ -61,11 +61,11 @@ export default function AdminGate({ children }: { children: ReactNode }) {
   if (!authed) {
     return (
       <div className="mx-auto max-w-sm py-16">
-        <div className="rounded-xl border border-white/10 bg-panel p-6">
-          <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-lime">
+        <div className="rounded-xl border border-turf-line bg-turf-panel p-6">
+          <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-accent">
             Admin Access
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">Enter the admin PIN.</p>
+          <p className="mt-1 text-sm text-chalk-mut">Enter the admin PIN.</p>
           <form onSubmit={submit} className="mt-4 space-y-3">
             <input
               type="password"
@@ -74,12 +74,12 @@ export default function AdminGate({ children }: { children: ReactNode }) {
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="PIN"
-              className="w-full rounded-md border border-white/10 bg-pitch px-3 py-2 text-center font-mono text-lg tracking-widest text-zinc-100 outline-none focus:border-lime"
+              className="w-full rounded-md border border-turf-line bg-turf-deep px-3 py-2 text-center font-mono text-lg tracking-widest text-chalk outline-none focus:border-accent"
             />
             {error && <p className="text-sm text-red-300">{error}</p>}
             <button
               type="submit"
-              className="w-full rounded-md bg-lime px-4 py-2.5 font-display font-bold uppercase tracking-wide text-pitch"
+              className="w-full rounded-md bg-accent px-4 py-2.5 font-display font-bold uppercase tracking-wide text-turf-deep"
             >
               Unlock
             </button>
@@ -92,7 +92,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-lime">
+        <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-accent">
           Admin
         </h1>
         <button
@@ -100,7 +100,7 @@ export default function AdminGate({ children }: { children: ReactNode }) {
             clearAdminPin();
             setAuthed(false);
           }}
-          className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-lime"
+          className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut hover:text-accent"
         >
           Lock
         </button>
@@ -120,8 +120,8 @@ export default function AdminGate({ children }: { children: ReactNode }) {
                   className={[
                     "block rounded-md px-3 py-1.5 font-display text-sm uppercase tracking-wide",
                     active
-                      ? "bg-lime text-pitch"
-                      : "bg-panel text-zinc-300 hover:text-lime",
+                      ? "bg-accent text-turf-deep"
+                      : "bg-turf-panel text-chalk hover:text-accent",
                   ].join(" ")}
                 >
                   {l.label}

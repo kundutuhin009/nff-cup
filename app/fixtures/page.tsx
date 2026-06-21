@@ -33,7 +33,7 @@ export default async function FixturesPage() {
 
   return (
     <main className="space-y-5">
-      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
+      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
         Fixtures
       </h1>
 
@@ -57,7 +57,7 @@ export default async function FixturesPage() {
             <Panel key={g}>
               <PanelTitle>Group {g} · Fixtures</PanelTitle>
               {ms.length === 0 ? (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-chalk-mut">
                   Fixtures not generated yet.
                 </p>
               ) : (
@@ -81,15 +81,15 @@ export default async function FixturesPage() {
             return (
               <div
                 key={r}
-                className="rounded-lg border border-white/5 bg-pitch/50 p-3"
+                className="rounded-lg border border-turf-line bg-turf-deep/50 p-3"
               >
-                <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+                <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
                   {ROUND_TITLES[r]}
                 </div>
                 {m ? (
                   <MatchRow match={m} teamName={teamName} />
                 ) : (
-                  <div className="py-2.5 text-center text-sm text-zinc-600">
+                  <div className="py-2.5 text-center text-sm text-chalk-mut">
                     Awaiting teams
                   </div>
                 )}

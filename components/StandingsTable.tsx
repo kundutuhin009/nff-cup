@@ -45,7 +45,7 @@ export default function StandingsTable({
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="font-mono text-[10px] text-zinc-500">
+          <tr className="font-mono text-[10px] text-chalk-mut">
             <th scope="col" className="py-2 pr-2 text-left">
               #
             </th>
@@ -57,7 +57,7 @@ export default function StandingsTable({
             {!mini && <SortableTH label="GF" sortKey="gf" sortable={sortable} align="center" className="px-1" />}
             {!mini && <SortableTH label="GA" sortKey="ga" sortable={sortable} align="center" className="px-1" />}
             <SortableTH label="GD" sortKey="gd" sortable={sortable} align="center" className="px-1" />
-            <SortableTH label="Pts" sortKey="points" sortable={sortable} align="center" className="px-1 text-lime" />
+            <SortableTH label="Pts" sortKey="points" sortable={sortable} align="center" className="px-1 text-accent" />
           </tr>
         </thead>
         <tbody className="font-mono">
@@ -65,12 +65,12 @@ export default function StandingsTable({
             <tr
               key={r.team_id}
               className={[
-                "border-t border-white/5",
-                r.__advancing ? "text-zinc-100" : "text-zinc-400",
+                "border-t border-turf-line",
+                r.__advancing ? "text-chalk" : "text-chalk-mut",
               ].join(" ")}
             >
               <td className="py-2 pr-2">
-                <span className={r.__advancing ? "text-lime" : "text-zinc-600"}>
+                <span className={r.__advancing ? "text-accent" : "text-chalk-mut"}>
                   {r.__rank}
                 </span>
               </td>
@@ -82,7 +82,7 @@ export default function StandingsTable({
               {!mini && <td className="px-1 text-center">{r.gf}</td>}
               {!mini && <td className="px-1 text-center">{r.ga}</td>}
               <td className="px-1 text-center">{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
-              <td className="px-1 text-center font-bold text-lime">{r.points}</td>
+              <td className="px-1 text-center font-bold text-accent">{r.points}</td>
             </tr>
           ))}
         </tbody>

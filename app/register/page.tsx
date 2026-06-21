@@ -50,7 +50,7 @@ export default function RegisterPage() {
   //  - gk            -> locked to Goalkeeper
   //  - player        -> Defender/Midfielder/Forward only (no GK tier)
   //  - playing owner -> any of the four
-  //  - non-playing owner -> no on-pitch position (field hidden, submit null)
+  //  - non-playing owner -> no on-turf-deep position (field hidden, submit null)
   const positionHidden = regType === "owner" && !isPlaying;
   const positionLocked = regType === "gk";
   const positionOptions: Position[] =
@@ -146,10 +146,10 @@ export default function RegisterPage() {
     return (
       <main className="space-y-5">
         <Panel className="text-center">
-          <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
-            You&apos;re in! ⚽
+          <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
+            You&apos;re in!
           </h1>
-          <p className="mt-3 text-sm text-zinc-300">
+          <p className="mt-3 text-sm text-chalk">
             Registration received. The admin will verify your payment and you&apos;ll
             be entered into the auction pool.
           </p>
@@ -159,25 +159,40 @@ export default function RegisterPage() {
   }
 
   const inputCls =
-    "w-full rounded-md border border-white/10 bg-pitch px-3 py-2 text-sm text-zinc-100 outline-none focus:border-lime";
+    "w-full rounded-md border border-turf-line bg-turf-deep px-3 py-2 text-sm text-chalk outline-none focus:border-accent";
   const labelCls =
-    "block font-mono text-[10px] uppercase tracking-widest text-zinc-400";
+    "block font-mono text-[10px] uppercase tracking-widest text-chalk-mut";
 
   return (
     <main className="space-y-5">
-      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
+      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
         Player Registration
       </h1>
 
       {/* FOOTWEAR DISCLAIMER — prominent */}
-      <div className="rounded-xl border-2 border-lime bg-lime/10 p-4">
-        <div className="font-display text-lg font-bold uppercase tracking-wide text-lime">
-          ⚠ Footwear Rule
+      <div className="rounded-xl border-2 border-accent bg-accent/10 p-4">
+        <div className="flex items-center gap-2 font-display text-lg font-bold uppercase tracking-wide text-accent">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          Footwear Rule
         </div>
-        <p className="mt-1 text-sm font-semibold text-zinc-100">
+        <p className="mt-1 text-sm font-semibold text-chalk">
           Only joggers or small-guti shoes allowed. NO boots, NO spikes.
         </p>
-        <p className="mt-1 text-sm text-zinc-300">
+        <p className="mt-1 text-sm text-chalk">
           Strictly enforced — violators will not be allowed to play.
         </p>
       </div>
@@ -186,7 +201,7 @@ export default function RegisterPage() {
         <PanelTitle>Your Details</PanelTitle>
         <form onSubmit={onSubmit} className="space-y-4">
           {/* Registration type + live fee */}
-          <div className="rounded-lg border border-lime/20 bg-lime/5 p-3">
+          <div className="rounded-lg border border-accent/20 bg-accent/5 p-3">
             <span className={labelCls}>Registration Type *</span>
             <div
               className={`mt-1.5 grid gap-2 ${
@@ -203,13 +218,13 @@ export default function RegisterPage() {
                     className={[
                       "rounded-md border px-2 py-2 text-center text-sm font-semibold transition-colors",
                       active
-                        ? "border-lime bg-lime text-pitch"
-                        : "border-white/10 bg-pitch text-zinc-200 hover:border-lime/50",
+                        ? "border-accent bg-accent text-turf-deep"
+                        : "border-turf-line bg-turf-deep text-chalk hover:border-accent/50",
                     ].join(" ")}
                   >
                     <div>{REG_TYPE_LABELS[rt]}</div>
                     <div
-                      className={`font-mono text-[10px] ${active ? "text-pitch/70" : "text-zinc-500"}`}
+                      className={`font-mono text-[10px] ${active ? "text-turf-deep/70" : "text-chalk-mut"}`}
                     >
                       ₹{feeFor(rt)}
                     </div>
@@ -219,18 +234,18 @@ export default function RegisterPage() {
             </div>
 
             {regType === "owner" && (
-              <label className="mt-3 flex items-center gap-2 text-sm text-zinc-200">
+              <label className="mt-3 flex items-center gap-2 text-sm text-chalk">
                 <input
                   type="checkbox"
                   checked={isPlaying}
                   onChange={(e) => setIsPlaying(e.target.checked)}
-                  className="h-4 w-4 accent-lime"
+                  className="h-4 w-4 accent-accent"
                 />
                 Playing owner? (will take a squad slot)
               </label>
             )}
 
-            <p className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-lime">
+            <p className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-accent">
               Amount to pay: ₹{fee}
             </p>
           </div>
@@ -285,7 +300,7 @@ export default function RegisterPage() {
                 Position
               </label>
               {positionHidden ? (
-                <div className={`${inputCls} text-zinc-500`}>
+                <div className={`${inputCls} text-chalk-mut`}>
                   N/A — non-playing
                 </div>
               ) : (
@@ -348,7 +363,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={submitting || photo.busy || payment.busy}
-            className="w-full rounded-md bg-lime px-4 py-3 font-display text-lg font-bold uppercase tracking-wide text-pitch transition-opacity disabled:opacity-50"
+            className="w-full rounded-md bg-accent px-4 py-3 font-display text-lg font-bold uppercase tracking-wide text-turf-deep transition-opacity disabled:opacity-50"
           >
             {submitting ? "Submitting…" : "Register"}
           </button>
@@ -372,7 +387,7 @@ function ImageField({
   return (
     <div>
       <label
-        className="block font-mono text-[10px] uppercase tracking-widest text-zinc-400"
+        className="block font-mono text-[10px] uppercase tracking-widest text-chalk-mut"
         htmlFor={id}
       >
         {label}
@@ -383,7 +398,7 @@ function ImageField({
           type="file"
           accept="image/*"
           onChange={(e) => onChange(e.target.files?.[0])}
-          className="block w-full text-sm text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-panel file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-lime"
+          className="block w-full text-sm text-chalk file:mr-3 file:rounded-md file:border-0 file:bg-turf-panel file:px-3 file:py-2 file:font-mono file:text-xs file:uppercase file:text-accent"
         />
         {state.result && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -395,10 +410,10 @@ function ImageField({
         )}
       </div>
       {state.busy && (
-        <p className="mt-1 text-xs text-zinc-500">Compressing…</p>
+        <p className="mt-1 text-xs text-chalk-mut">Compressing…</p>
       )}
       {state.result && (
-        <p className="mt-1 font-mono text-[10px] text-zinc-500">
+        <p className="mt-1 font-mono text-[10px] text-chalk-mut">
           {(state.result.bytes / 1024).toFixed(0)} KB ready
         </p>
       )}

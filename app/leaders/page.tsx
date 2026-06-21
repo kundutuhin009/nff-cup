@@ -55,17 +55,17 @@ export default async function LeadersPage() {
 
   return (
     <main className="space-y-5">
-      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
+      <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
         Leaderboard
       </h1>
 
       <Panel>
         <PanelTitle>Top Players</PanelTitle>
-        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
           Score = Goals×3 + Assists×1
         </p>
         {playerRows.length === 0 ? (
-          <p className="text-sm text-zinc-500">No player stats yet.</p>
+          <p className="text-sm text-chalk-mut">No player stats yet.</p>
         ) : (
           <LeaderboardTable rows={playerRows} />
         )}
@@ -73,11 +73,11 @@ export default async function LeadersPage() {
 
       <Panel>
         <PanelTitle>Goalkeepers</PanelTitle>
-        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
           Ranked by clean sheets, then fewest goals conceded, then most matches played
         </p>
         {gkRows.length === 0 ? (
-          <p className="text-sm text-zinc-500">No goalkeeper stats yet.</p>
+          <p className="text-sm text-chalk-mut">No goalkeeper stats yet.</p>
         ) : (
           <GoalkeeperTable rows={gkRows} />
         )}
@@ -86,19 +86,19 @@ export default async function LeadersPage() {
       <Panel>
         <PanelTitle>Man of the Match</PanelTitle>
         {playedWithMotm.length === 0 ? (
-          <p className="text-sm text-zinc-500">No MOTM awarded yet.</p>
+          <p className="text-sm text-chalk-mut">No MOTM awarded yet.</p>
         ) : (
           <ul className="space-y-2">
             {playedWithMotm.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between border-t border-white/5 py-2 text-sm"
+                className="flex items-center justify-between border-t border-turf-line py-2 text-sm"
               >
-                <span className="font-mono text-xs text-zinc-400">
+                <span className="font-mono text-xs text-chalk-mut">
                   {teamName(m.home_team_id)} {m.home_score}–{m.away_score}{" "}
                   {teamName(m.away_team_id)}
                 </span>
-                <span className="font-semibold text-lime">
+                <span className="font-semibold text-accent">
                   {playerName.get(m.motm_registration_id as string) ?? "—"}
                 </span>
               </li>

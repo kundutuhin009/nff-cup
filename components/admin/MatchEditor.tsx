@@ -102,12 +102,12 @@ export default function MatchEditor({
 
   const isKnockout = match.stage === "knockout";
   const numCls =
-    "w-14 rounded border border-white/10 bg-pitch px-2 py-1 text-center font-mono";
+    "w-14 rounded border border-turf-line bg-turf-deep px-2 py-1 text-center font-mono";
   const selCls =
-    "rounded border border-white/10 bg-pitch px-2 py-1 text-sm";
+    "rounded border border-turf-line bg-turf-deep px-2 py-1 text-sm";
 
   return (
-    <div className="mt-2 space-y-3 rounded-lg border border-lime/20 bg-pitch/40 p-3">
+    <div className="mt-2 space-y-3 rounded-lg border border-accent/20 bg-turf-deep/40 p-3">
       {/* Team pickers (knockout) or fixed labels (group) */}
       {isKnockout && (
         <div className="flex flex-wrap items-center gap-2">
@@ -123,7 +123,7 @@ export default function MatchEditor({
               </option>
             ))}
           </select>
-          <span className="text-zinc-500">vs</span>
+          <span className="text-chalk-mut">vs</span>
           <select
             value={awayTeam}
             onChange={(e) => setAwayTeam(e.target.value)}
@@ -142,7 +142,7 @@ export default function MatchEditor({
       {/* Score + played */}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-[10px] uppercase text-zinc-500">Home</span>
+          <span className="font-mono text-[10px] uppercase text-chalk-mut">Home</span>
           <input
             type="number"
             min={0}
@@ -152,7 +152,7 @@ export default function MatchEditor({
           />
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <span className="font-mono text-[10px] uppercase text-zinc-500">Away</span>
+          <span className="font-mono text-[10px] uppercase text-chalk-mut">Away</span>
           <input
             type="number"
             min={0}
@@ -166,7 +166,7 @@ export default function MatchEditor({
             type="checkbox"
             checked={played}
             onChange={(e) => setPlayed(e.target.checked)}
-            className="h-4 w-4 accent-lime"
+            className="h-4 w-4 accent-accent"
           />
           Played
         </label>
@@ -177,7 +177,7 @@ export default function MatchEditor({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left font-mono text-[10px] uppercase text-zinc-500">
+              <tr className="text-left font-mono text-[10px] uppercase text-chalk-mut">
                 <th className="py-1">Player</th>
                 <th className="py-1 text-center">Goals</th>
                 <th className="py-1 text-center">Assists</th>
@@ -185,7 +185,7 @@ export default function MatchEditor({
             </thead>
             <tbody>
               {roster.map((p) => (
-                <tr key={p.id} className="border-t border-white/5">
+                <tr key={p.id} className="border-t border-turf-line">
                   <td className="py-1 pr-2">{p.full_name}</td>
                   <td className="py-1 text-center">
                     <input
@@ -193,7 +193,7 @@ export default function MatchEditor({
                       min={0}
                       value={stats[p.id]?.goals ?? 0}
                       onChange={(e) => setStat(p.id, "goals", Number(e.target.value))}
-                      className="w-14 rounded border border-white/10 bg-pitch px-1 py-0.5 text-center font-mono"
+                      className="w-14 rounded border border-turf-line bg-turf-deep px-1 py-0.5 text-center font-mono"
                     />
                   </td>
                   <td className="py-1 text-center">
@@ -202,7 +202,7 @@ export default function MatchEditor({
                       min={0}
                       value={stats[p.id]?.assists ?? 0}
                       onChange={(e) => setStat(p.id, "assists", Number(e.target.value))}
-                      className="w-14 rounded border border-white/10 bg-pitch px-1 py-0.5 text-center font-mono"
+                      className="w-14 rounded border border-turf-line bg-turf-deep px-1 py-0.5 text-center font-mono"
                     />
                   </td>
                 </tr>
@@ -211,14 +211,14 @@ export default function MatchEditor({
           </table>
         </div>
       ) : (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-chalk-mut">
           Assign players to both teams to record goals/assists.
         </p>
       )}
 
       {/* MOTM */}
       <label className="flex items-center gap-2 text-sm">
-        <span className="font-mono text-[10px] uppercase text-zinc-500">MOTM</span>
+        <span className="font-mono text-[10px] uppercase text-chalk-mut">MOTM</span>
         <select
           value={motm}
           onChange={(e) => setMotm(e.target.value)}
@@ -237,7 +237,7 @@ export default function MatchEditor({
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-md bg-lime px-4 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-pitch disabled:opacity-50"
+          className="rounded-md bg-accent px-4 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-turf-deep disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
@@ -249,7 +249,7 @@ export default function MatchEditor({
             Delete
           </button>
         )}
-        {msg && <span className="font-mono text-xs text-zinc-400">{msg}</span>}
+        {msg && <span className="font-mono text-xs text-chalk-mut">{msg}</span>}
       </div>
     </div>
   );

@@ -27,21 +27,34 @@ export default async function HomePage() {
 
   return (
     <main className="space-y-5">
-      {/* Hero scoreboard */}
-      <div className="rounded-xl border border-lime/20 bg-gradient-to-b from-panel to-pitch p-6 text-center">
-        <h1 className="font-display text-3xl font-bold uppercase tracking-widest text-lime sm:text-4xl">
+      {/* Hero scoreboard — chalk title under an amber floodlight glow */}
+      <div className="floodlight pitch-marks relative overflow-hidden rounded-xl border border-turf-line bg-gradient-to-b from-turf-panel to-turf-deep p-8 text-center">
+        <h1 className="font-display text-3xl font-bold uppercase tracking-widest text-chalk sm:text-4xl">
           {TOURNAMENT_NAME}
         </h1>
-        <p className="mt-2 font-mono text-xs uppercase tracking-[0.3em] text-zinc-400">
-          8 Teams · 2 Groups · One Trophy
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.3em] text-chalk-mut">
+          8 Teams · 2 Groups · <span className="text-accent">One Trophy</span>
         </p>
         <a
           href={VENUE_MAPS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-lime/30 bg-lime/10 px-3 py-1.5 text-sm font-semibold text-lime transition-colors hover:bg-lime/20"
+          className="mt-5 inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/20"
         >
-          <span aria-hidden>📍</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
           <span>
             Venue: <span className="underline decoration-dotted">{VENUE_NAME}</span>
           </span>
