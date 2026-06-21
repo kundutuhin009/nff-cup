@@ -254,6 +254,9 @@ export default function RegisterPage() {
                 {PAYMENT_UPI}
               </span>
             </p>
+            <div className="mt-3">
+              <QrCard />
+            </div>
           </div>
 
           <div>
@@ -361,7 +364,10 @@ export default function RegisterPage() {
               </span>
               , then upload your ₹{fee} screenshot.
             </p>
-            <div className="mt-2">
+            <div className="mt-3">
+              <QrCard />
+            </div>
+            <div className="mt-3">
               <ImageField
                 id="payment"
                 label={`Upload your ₹${fee} payment screenshot * (compressed in your browser)`}
@@ -387,6 +393,37 @@ export default function RegisterPage() {
         </form>
       </Panel>
     </main>
+  );
+}
+
+// Payment QR — local public asset. A white card behind it gives the quiet-zone
+// the dark theme would otherwise eat, so it scans reliably. If the file isn't
+// present the card hides itself (the typed number still covers payment).
+function QrCard() {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+        Scan to pay
+      </span>
+      <div className="rounded-lg bg-white p-2.5 shadow-md shadow-black/30">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/payment-qr.png"
+          alt={`UPI / PhonePe payment QR — pay to ${PAYMENT_UPI}`}
+          loading="lazy"
+          width={200}
+          height={200}
+          onError={(e) => {
+            const card = e.currentTarget.parentElement;
+            if (card) card.style.display = "none";
+          }}
+          className="h-[200px] w-[200px] object-contain"
+        />
+      </div>
+      <span className="text-center font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+        Scan with any UPI app (PhonePe / GPay / Paytm)
+      </span>
+    </div>
   );
 }
 
