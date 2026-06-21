@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TOURNAMENT_NAME, TOURNAMENT_SHORT } from "@/lib/tournament";
+import {
+  EVENT_DATE,
+  EVENT_TIME,
+  TOURNAMENT_NAME,
+  TOURNAMENT_SHORT,
+} from "@/lib/tournament";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -28,9 +33,16 @@ export default function SiteHeader() {
             {TOURNAMENT_NAME}
           </span>
         </Link>
-        <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.3em] text-chalk-mut sm:inline">
-          Floodlit&nbsp;5+2
-        </span>
+        {/* Date/time + tagline — right side on sm+; relocated below the nav on mobile */}
+        <div className="hidden shrink-0 flex-col items-end text-right sm:flex">
+          <span className="font-mono text-[11px] uppercase tracking-[0.15em]">
+            <span className="text-accent">{EVENT_DATE}</span>
+            <span className="text-chalk-mut"> · {EVENT_TIME}</span>
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-chalk-mut">
+            Floodlit&nbsp;5+2
+          </span>
+        </div>
       </div>
 
       {/* Nav row */}
@@ -58,6 +70,14 @@ export default function SiteHeader() {
           })}
         </ul>
       </nav>
+
+      {/* Mobile: date/time below the nav so the top strip stays uncrushed */}
+      <div className="px-4 pb-2 text-center sm:hidden">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em]">
+          <span className="text-accent">{EVENT_DATE}</span>
+          <span className="text-chalk-mut"> · {EVENT_TIME}</span>
+        </span>
+      </div>
     </header>
   );
 }
