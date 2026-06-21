@@ -186,23 +186,35 @@ export default function AuctionPage() {
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {pool.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelected(selected === p.id ? null : p.id)}
-                className={[
-                  "rounded-md px-3 py-1.5 text-sm transition-colors",
-                  selected === p.id
-                    ? "bg-accent text-turf-deep"
-                    : "bg-turf-deep text-chalk hover:bg-turf-deep/60",
-                ].join(" ")}
-              >
-                {p.full_name}
-                <span className="ml-1 font-mono text-[10px] text-chalk-mut">
-                  {p.position?.[0] ?? "?"}
-                </span>
-              </button>
-            ))}
+            {pool.map((p) => {
+              const active = selected === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setSelected(active ? null : p.id)}
+                  className={[
+                    "flex items-center gap-2 rounded-md py-1.5 pl-1.5 pr-3 text-left text-sm transition-colors",
+                    active
+                      ? "bg-accent text-turf-deep"
+                      : "bg-turf-deep text-chalk hover:bg-turf-deep/60",
+                  ].join(" ")}
+                >
+                  <PlayerPhoto
+                    src={p.photo_base64}
+                    name={p.full_name}
+                    className="h-11 w-11"
+                  />
+                  <span className="flex flex-col leading-tight">
+                    <span className="font-medium">{p.full_name}</span>
+                    <span
+                      className={`font-mono text-[10px] ${active ? "text-turf-deep/70" : "text-chalk-mut"}`}
+                    >
+                      {p.reg_type === "gk" ? "GK" : "Player"} · {p.position ?? "—"}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -304,10 +316,15 @@ export default function AuctionPage() {
                     key={p.id}
                     onClick={() => unassign(p.id)}
                     title="Tap to remove"
-                    className="rounded bg-turf-deep px-2 py-1 text-xs text-chalk hover:bg-red-500/20"
+                    className="flex items-center gap-1.5 rounded bg-turf-deep py-1 pl-1 pr-2 text-xs text-chalk hover:bg-red-500/20"
                   >
-                    {p.full_name}
-                    <span className="ml-1 font-mono text-[10px] text-chalk-mut">
+                    <PlayerPhoto
+                      src={p.photo_base64}
+                      name={p.full_name}
+                      className="h-9 w-9"
+                    />
+                    <span>{p.full_name}</span>
+                    <span className="font-mono text-[10px] text-chalk-mut">
                       {p.position?.[0] ?? "?"}
                     </span>
                   </button>
@@ -321,5 +338,30 @@ export default function AuctionPage() {
         })}
       </div>
     </div>
+  );
+}
+
+// Player photo thumbnail (base64 already on the row — no extra fetch). Falls
+// back to a neutral tile when a player has no photo.
+function PlayerPhoto({
+  src,
+  name,
+  className,
+}: {
+  src: string | null;
+  name: string;
+  className: string;
+}) {
+  if (!src) {
+    return <div className={`${className} shrink-0 rounded-md bg-turf-line`} />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      className={`${className} shrink-0 rounded-md object-cover`}
+    />
   );
 }
