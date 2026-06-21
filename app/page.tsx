@@ -70,7 +70,7 @@ export default async function HomePage() {
         {updates.length === 0 ? (
           <p className="text-sm text-zinc-500">No announcements yet.</p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {updates.map((u) => (
               <li
                 key={u.id}
@@ -79,7 +79,18 @@ export default async function HomePage() {
                 <div className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
                   {formatDate(u.created_at)}
                 </div>
-                <p className="mt-1 whitespace-pre-wrap">{u.body}</p>
+                {u.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={u.image_url}
+                    alt={u.body ?? "Announcement"}
+                    loading="lazy"
+                    className="mt-2 max-h-96 w-full rounded-lg border border-white/10 bg-pitch object-contain"
+                  />
+                )}
+                {u.body && (
+                  <p className="mt-2 whitespace-pre-wrap">{u.body}</p>
+                )}
               </li>
             ))}
           </ul>

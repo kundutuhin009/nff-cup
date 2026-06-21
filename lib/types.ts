@@ -65,7 +65,8 @@ export interface MatchPlayerStat {
 export interface Update {
   id: string;
   created_at: string;
-  body: string;
+  body: string | null;
+  image_url: string | null;
 }
 
 // Anon-safe player shape, via the public_players view.

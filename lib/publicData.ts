@@ -48,7 +48,7 @@ export async function getPublicPlayers(): Promise<PublicPlayer[]> {
 export async function getUpdates(): Promise<Update[]> {
   const { data, error } = await supabase
     .from("updates")
-    .select("id, created_at, body")
+    .select("id, created_at, body, image_url")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Update[];

@@ -46,10 +46,14 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 }
 
 // Compress to <= targetBytes by scaling to maxWidth then nudging quality down.
+// hardLimitBytes is the post-compression ceiling that triggers a hard reject
+// (defaults to 200KB for the base64-in-DB photos; pass a larger value for
+// storage-bucket uploads like sponsor banners).
 export async function compressImage(
   file: File,
   opts: CompressOptions,
-  targetBytes?: number
+  targetBytes?: number,
+  hardLimitBytes: number = MAX_BASE64_BYTES
 ): Promise<CompressResult> {
   const img = await loadImage(file);
 
@@ -64,7 +68,7 @@ export async function compressImage(
   if (!ctx) throw new Error("Canvas not supported in this browser.");
   ctx.drawImage(img, 0, 0, w, h);
 
-  const target = targetBytes ?? MAX_BASE64_BYTES;
+  const target = targetBytes ?? hardLimitBytes;
   let quality = opts.quality;
   let dataUrl = canvas.toDataURL("image/jpeg", quality);
 
@@ -75,7 +79,7 @@ export async function compressImage(
   }
 
   const bytes = base64Bytes(dataUrl);
-  if (bytes > MAX_BASE64_BYTES) {
+  if (bytes > hardLimitBytes) {
     throw new ImageTooLargeError();
   }
 
