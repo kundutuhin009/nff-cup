@@ -2,22 +2,22 @@
 
 import { useMemo } from "react";
 import SortableTH from "@/components/SortableTH";
-import type { LeaderboardRow } from "@/lib/leaderboard";
+import type { GoalkeeperRow } from "@/lib/goalkeepers";
 import { byNumber, byText, useSortable, type Comparator } from "@/lib/useSortable";
 
-// Rows arrive pre-sorted by score desc; that is the default (cleared) order.
-interface RankedRow extends LeaderboardRow {
+// Rows arrive pre-sorted by the GK ranking; that is the default (cleared) order.
+interface RankedRow extends GoalkeeperRow {
   __rank: number;
 }
 
 const COMPARATORS: Record<string, Comparator<RankedRow>> = {
-  player: byText((r) => r.full_name),
-  goals: byNumber((r) => r.goals),
-  assists: byNumber((r) => r.assists),
-  score: byNumber((r) => r.score),
+  goalkeeper: byText((r) => r.full_name),
+  clean_sheets: byNumber((r) => r.clean_sheets),
+  goals_conceded: byNumber((r) => r.goals_conceded),
+  matches_played: byNumber((r) => r.matches_played),
 };
 
-export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
+export default function GoalkeeperTable({ rows }: { rows: GoalkeeperRow[] }) {
   const ranked = useMemo<RankedRow[]>(
     () => rows.map((r, i) => ({ ...r, __rank: i + 1 })),
     [rows]
@@ -32,13 +32,13 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
             <th scope="col" className="py-2 pr-2 text-left">
               #
             </th>
-            <SortableTH label="Player" sortKey="player" sortable={sortable} className="py-2 pr-2" />
+            <SortableTH label="Goalkeeper" sortKey="goalkeeper" sortable={sortable} className="py-2 pr-2" />
             <th scope="col" className="py-2 pr-2 text-left uppercase tracking-widest">
               Team
             </th>
-            <SortableTH label="G" sortKey="goals" sortable={sortable} align="center" className="px-1" />
-            <SortableTH label="A" sortKey="assists" sortable={sortable} align="center" className="px-1" />
-            <SortableTH label="Pts" sortKey="score" sortable={sortable} align="center" className="px-1 text-lime" />
+            <SortableTH label="CS" sortKey="clean_sheets" sortable={sortable} align="center" className="px-1 text-lime" />
+            <SortableTH label="GC" sortKey="goals_conceded" sortable={sortable} align="center" className="px-1" />
+            <SortableTH label="MP" sortKey="matches_played" sortable={sortable} align="center" className="px-1" />
           </tr>
         </thead>
         <tbody className="font-mono">
@@ -49,9 +49,9 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
               <td className="py-2 pr-2 font-sans text-zinc-400">
                 {r.team_name ?? "—"}
               </td>
-              <td className="px-1 text-center">{r.goals}</td>
-              <td className="px-1 text-center">{r.assists}</td>
-              <td className="px-1 text-center font-bold text-lime">{r.score}</td>
+              <td className="px-1 text-center font-bold text-lime">{r.clean_sheets}</td>
+              <td className="px-1 text-center">{r.goals_conceded}</td>
+              <td className="px-1 text-center">{r.matches_played}</td>
             </tr>
           ))}
         </tbody>

@@ -1,3 +1,4 @@
+import GoalkeeperTable from "@/components/GoalkeeperTable";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { Panel, PanelTitle } from "@/components/Panel";
 import {
@@ -7,6 +8,7 @@ import {
   getTeams,
 } from "@/lib/publicData";
 import { computeLeaderboard, type LeaderboardPlayer } from "@/lib/leaderboard";
+import { computeGoalkeepers, type GoalkeeperInput } from "@/lib/goalkeepers";
 
 export const dynamic = "force-dynamic";
 
@@ -18,22 +20,33 @@ export default async function LeadersPage() {
     getPublicPlayers(),
   ]);
 
-  // Map team name -> id so we can attribute clean sheets by team.
   const idByName = new Map(teams.map((t) => [t.name, t.id]));
   const nameById = new Map(teams.map((t) => [t.id, t.name]));
   const playerName = new Map(players.map((p) => [p.id, p.full_name]));
 
+  // BOARD 1 — players: anyone with goals or assists (score = G*3 + A*1).
   const lbPlayers: LeaderboardPlayer[] = players.map((p) => ({
     id: p.id,
     full_name: p.full_name,
-    position: p.position,
-    team_id: p.team_name ? idByName.get(p.team_name) ?? null : null,
     team_name: p.team_name,
   }));
-
-  const rows = computeLeaderboard(lbPlayers, matches, stats).filter(
+  const playerRows = computeLeaderboard(lbPlayers, stats).filter(
     (r) => r.score > 0
   );
+
+  // BOARD 2 — goalkeepers: designated GKs = reg_type 'gk' players on a team.
+  // GK stats are derived from their team's played-match scores.
+  const goalkeepers: GoalkeeperInput[] = players
+    .filter((p) => p.reg_type === "gk" && p.team_name)
+    .map((p) => ({
+      id: p.id,
+      full_name: p.full_name,
+      team_id: idByName.get(p.team_name as string) ?? "",
+      team_name: p.team_name,
+    }))
+    .filter((g) => g.team_id); // skip if team can't be resolved
+  const anyPlayed = matches.some((m) => m.played);
+  const gkRows = anyPlayed ? computeGoalkeepers(goalkeepers, matches) : [];
 
   const playedWithMotm = matches.filter((m) => m.played && m.motm_registration_id);
 
@@ -45,16 +58,28 @@ export default async function LeadersPage() {
       <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-lime">
         Leaderboard
       </h1>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-        Score = Goals×3 + Assists×1 + Clean&nbsp;Sheets×3
-      </p>
 
       <Panel>
         <PanelTitle>Top Players</PanelTitle>
-        {rows.length === 0 ? (
-          <p className="text-sm text-zinc-500">No stats recorded yet.</p>
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+          Score = Goals×3 + Assists×1
+        </p>
+        {playerRows.length === 0 ? (
+          <p className="text-sm text-zinc-500">No player stats yet.</p>
         ) : (
-          <LeaderboardTable rows={rows} />
+          <LeaderboardTable rows={playerRows} />
+        )}
+      </Panel>
+
+      <Panel>
+        <PanelTitle>Goalkeepers</PanelTitle>
+        <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
+          Ranked by clean sheets, then fewest goals conceded, then most matches played
+        </p>
+        {gkRows.length === 0 ? (
+          <p className="text-sm text-zinc-500">No goalkeeper stats yet.</p>
+        ) : (
+          <GoalkeeperTable rows={gkRows} />
         )}
       </Panel>
 
