@@ -95,8 +95,16 @@ export async function PATCH(
     .from("teams")
     .update(patch)
     .eq("id", params.id);
-  if (error)
+  if (error) {
+    // Partial unique index teams_owner_registration_id_key — surface a clean
+    // message instead of a raw Postgres unique-violation dump.
+    if (error.code === "23505")
+      return NextResponse.json(
+        { error: "That owner already runs another team." },
+        { status: 400 }
+      );
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

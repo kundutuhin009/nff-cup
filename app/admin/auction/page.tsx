@@ -61,6 +61,17 @@ export default function AuctionPage() {
     () => rows.filter((r) => r.reg_type === "owner" && r.paid),
     [rows]
   );
+  // Owners already running a team — excluded from OTHER teams' dropdowns
+  // (mirrors how drafted players leave the pool).
+  const assignedOwnerIds = useMemo(
+    () =>
+      new Set(
+        teams
+          .map((t) => t.owner_registration_id)
+          .filter((id): id is string => !!id)
+      ),
+    [teams]
+  );
   // Playing members = drafted gk/player + the owner if they're playing.
   const playingCountOf = useCallback(
     (teamId: string, ownerRegId: string | null) => {
@@ -203,6 +214,10 @@ export default function AuctionPage() {
           const owner = t.owner_registration_id
             ? byId.get(t.owner_registration_id)
             : undefined;
+          // Available = unassigned owners, plus this team's current owner.
+          const availableOwners = owners.filter(
+            (o) => o.id === t.owner_registration_id || !assignedOwnerIds.has(o.id)
+          );
           const playing = playingCountOf(t.id, t.owner_registration_id);
           const full = playing >= MAX_PER_TEAM;
           return (
@@ -213,9 +228,17 @@ export default function AuctionPage() {
               <div className="mb-2 flex items-center gap-2">
                 <input
                   defaultValue={t.name}
+                  title="Click to rename — saves on blur or Enter"
                   onBlur={(e) => {
                     const v = e.target.value.trim();
                     if (v && v !== t.name) renameTeam(t.id, v);
+                    else if (!v) e.target.value = t.name; // reject empty, restore
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
                   }}
                   className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-1 font-display text-base uppercase text-lime hover:border-white/10 focus:border-lime focus:bg-pitch focus:outline-none"
                 />
@@ -246,7 +269,7 @@ export default function AuctionPage() {
                   className="min-w-0 flex-1 rounded bg-pitch px-1 py-1 text-xs text-zinc-200"
                 >
                   <option value="">— none —</option>
-                  {owners.map((o) => (
+                  {availableOwners.map((o) => (
                     <option key={o.id} value={o.id} className="bg-pitch">
                       {o.full_name}
                       {o.is_playing ? "" : " (non-playing)"}
