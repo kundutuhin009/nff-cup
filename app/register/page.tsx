@@ -408,7 +408,7 @@ function QrCard() {
       <div className="rounded-lg bg-white p-2.5 shadow-md shadow-black/30">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/payment-qr.png"
+          src="/payment-qr.jpg"
           alt={`UPI / PhonePe payment QR — pay to ${PAYMENT_UPI}`}
           loading="lazy"
           width={200}
