@@ -49,7 +49,7 @@ export default function RootLayout({
         <div className="mx-auto max-w-5xl px-4 py-5">{children}</div>
         <footer className="mx-auto max-w-5xl px-4 py-8 text-center font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
           <div>
-            {TOURNAMENT_NAME} · 7-a-side · {new Date().getFullYear()}
+            {TOURNAMENT_NAME} · 5+2 · {new Date().getFullYear()}
           </div>
           <div className="mt-1 flex items-center justify-center gap-1 normal-case tracking-normal">
             <span>Venue:</span>

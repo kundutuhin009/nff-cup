@@ -1,6 +1,6 @@
 # NFF Cup ⚽
 
-A public-facing web app for an intra 7-a-side football tournament run by NFF.
+A public-facing web app for an intra 5+2 football tournament run by NFF.
 Players register individually, get drafted into 8 teams via an auction, and the
 public follows fixtures, standings, the leaderboard, and Man-of-the-Match — all
 on their phones.

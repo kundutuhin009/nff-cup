@@ -29,7 +29,7 @@ export default function SiteHeader() {
           </span>
         </Link>
         <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.3em] text-chalk-mut sm:inline">
-          Floodlit&nbsp;7-a-side
+          Floodlit&nbsp;5+2
         </span>
       </div>
 
