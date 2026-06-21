@@ -248,15 +248,6 @@ export default function RegisterPage() {
             <p className="mt-3 font-display text-lg font-bold uppercase tracking-wide text-accent">
               Amount to pay: ₹{fee}
             </p>
-            <p className="mt-2 text-sm text-chalk">
-              Pay ₹{fee} to UPI / PhonePe / GPay:{" "}
-              <span className="select-all font-mono text-xl font-bold tracking-wider text-accent">
-                {PAYMENT_UPI}
-              </span>
-            </p>
-            <div className="mt-3">
-              <QrCard />
-            </div>
           </div>
 
           <div>
