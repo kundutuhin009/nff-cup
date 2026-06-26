@@ -16,4 +16,4 @@ export const PAYMENT_UPI = "8017893709";
 // (and the matching server check in /api/register). Admin owner management and
 // the auction are unaffected. Set true to re-open Owner self-registration
 // before the auction.
-export const OWNERS_REGISTRATION_OPEN = false;
+export const OWNERS_REGISTRATION_OPEN = true;
