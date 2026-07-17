@@ -6,12 +6,22 @@ const MAX_PER_TEAM = 7;
 
 // POST: assign (or move/unassign) a player's team. Single source of truth for
 // team_players, used by BOTH the master table and the auction screen.
-// body: { registration_id, team_id: string | null }
+// body: { registration_id, team_id: string | null, price?: number }
+//
+// price is the euros the player was drafted for (auction screen). It's
+// OPTIONAL so the master table's plain team dropdown keeps working unchanged;
+// omitting it on a new assignment falls back to the column default of 0.
+// Overspending is deliberately NOT blocked here — the admin can knowingly
+// override the warning in the UI and let a team go negative.
 export async function POST(req: Request) {
   const unauth = requireAdmin(req);
   if (unauth) return unauth;
 
-  let body: { registration_id?: string; team_id?: string | null };
+  let body: {
+    registration_id?: string;
+    team_id?: string | null;
+    price?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -22,6 +32,16 @@ export async function POST(req: Request) {
   const team_id = body.team_id ?? null;
   if (!registration_id)
     return NextResponse.json({ error: "registration_id required." }, { status: 400 });
+
+  let price: number | undefined;
+  if (body.price !== undefined && body.price !== null) {
+    price = Number(body.price);
+    if (!Number.isInteger(price) || price < 0)
+      return NextResponse.json(
+        { error: "Price must be a whole number of euros, 0 or more." },
+        { status: 400 }
+      );
+  }
 
   // Unassign
   if (team_id === null) {
@@ -88,14 +108,18 @@ export async function POST(req: Request) {
   }
 
   // Upsert on registration_id (unique) -> moves player if they had a team.
+  // Only send `price` when the caller supplied one: PostgREST's ON CONFLICT
+  // updates just the columns present, so omitting it preserves the existing
+  // price when the master table moves an already-drafted player, and falls
+  // back to the column default of 0 on a fresh insert.
+  const row: Record<string, unknown> = { registration_id, team_id };
+  if (price !== undefined) row.price = price;
+
   const { error } = await supabaseAdmin
     .from("team_players")
-    .upsert(
-      { registration_id, team_id },
-      { onConflict: "registration_id" }
-    );
+    .upsert(row, { onConflict: "registration_id" });
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, team_id });
+  return NextResponse.json({ ok: true, team_id, price });
 }

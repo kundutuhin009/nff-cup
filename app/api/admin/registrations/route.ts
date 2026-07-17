@@ -17,20 +17,24 @@ export async function GET(req: Request) {
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // price rides along with the team link — it's auction data the anon client
+  // can't read (team_players has no anon policy), so it must come from here.
   const { data: tps, error: tpErr } = await supabaseAdmin
     .from("team_players")
-    .select("registration_id, team_id");
+    .select("registration_id, team_id, price");
   if (tpErr)
     return NextResponse.json({ error: tpErr.message }, { status: 500 });
 
-  const teamByReg = new Map(
-    (tps ?? []).map((tp) => [tp.registration_id, tp.team_id])
-  );
+  const draftByReg = new Map((tps ?? []).map((tp) => [tp.registration_id, tp]));
 
-  const rows = (regs ?? []).map((r) => ({
-    ...r,
-    team_id: teamByReg.get(r.id) ?? null,
-  }));
+  const rows = (regs ?? []).map((r) => {
+    const draft = draftByReg.get(r.id);
+    return {
+      ...r,
+      team_id: draft?.team_id ?? null,
+      price: draft?.price ?? null, // null = not drafted (distinct from €0)
+    };
+  });
 
   return NextResponse.json({ registrations: rows });
 }

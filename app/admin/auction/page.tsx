@@ -1,21 +1,35 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PhotoModal from "@/components/admin/PhotoModal";
 import { adminFetch } from "@/lib/adminFetch";
-import { supabase } from "@/lib/supabaseClient";
-import type { Registration, Team } from "@/lib/types";
+import {
+  TONE_CLASS,
+  formatEuros,
+  remainingOf,
+  spentOf,
+  toneOf,
+} from "@/lib/auction";
+import type { AdminTeam, Registration } from "@/lib/types";
 
 interface AdminRow extends Registration {
   team_id: string | null;
+  price: number | null; // euros drafted for; null = not drafted
 }
 
 const MAX_PER_TEAM = 7;
 
 export default function AuctionPage() {
   const [rows, setRows] = useState<AdminRow[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<AdminTeam[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  // Draft price for the selected player, as typed. Kept as a string so the
+  // field can be empty mid-entry rather than snapping to 0.
+  const [price, setPrice] = useState("");
+  // Team tapped before a price was entered — Enter in the price field then
+  // confirms the draft, so either order works during a live auction.
+  const [armedTeam, setArmedTeam] = useState<string | null>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
   const [photoOf, setPhotoOf] = useState<AdminRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,16 +41,14 @@ export default function AuctionPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ registrations }, teamRes] = await Promise.all([
+      // Teams come from the admin route, not the anon client: 0005 revokes the
+      // `purse` column grant from anon, so budgets are unreadable there.
+      const [{ registrations }, { teams: teamList }] = await Promise.all([
         adminFetch<{ registrations: AdminRow[] }>("/api/admin/registrations"),
-        supabase
-          .from("teams")
-          .select("id, name, group_label, seed_index, owner_registration_id")
-          .order("group_label")
-          .order("seed_index"),
+        adminFetch<{ teams: AdminTeam[] }>("/api/admin/teams"),
       ]);
       setRows(registrations);
-      setTeams((teamRes.data ?? []) as Team[]);
+      setTeams(teamList);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load.");
     } finally {
@@ -87,29 +99,82 @@ export default function AuctionPage() {
     [rosterOf, byId]
   );
 
+  // Budget per team: SPENT is summed from the drafted prices (owners are free
+  // and never land in team_players), REMAINING falls out of purse - spent. Both
+  // recompute from `rows`, so they self-correct on every draft and removal.
+  const budgetOf = useCallback(
+    (t: AdminTeam) => {
+      const spent = spentOf(rosterOf(t.id));
+      return { spent, remaining: remainingOf(t.purse, spent) };
+    },
+    [rosterOf]
+  );
+
+  // The typed price, or null while it isn't a usable whole number of euros.
+  const parsedPrice = useMemo(() => {
+    if (price.trim() === "") return null;
+    const n = Number(price);
+    return Number.isInteger(n) && n >= 0 ? n : null;
+  }, [price]);
+
   function patchLocal(id: string, patch: Partial<AdminRow>) {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
-  async function assign(teamId: string) {
+  function selectPlayer(id: string | null) {
+    setSelected(id);
+    setPrice("");
+    setArmedTeam(null);
+    if (id) requestAnimationFrame(() => priceRef.current?.focus());
+  }
+
+  async function assign(teamId: string, amount: number) {
     if (!selected) return;
     const team = teams.find((t) => t.id === teamId);
-    if (playingCountOf(teamId, team?.owner_registration_id ?? null) >= MAX_PER_TEAM) {
+    if (!team) return;
+    if (playingCountOf(teamId, team.owner_registration_id) >= MAX_PER_TEAM) {
       alert(`Team is full (max ${MAX_PER_TEAM} playing members).`);
       return;
     }
+
+    // Overspend WARNS but never blocks — the admin can knowingly override and
+    // let the team run negative.
+    const { remaining } = budgetOf(team);
+    if (amount > remaining) {
+      const ok = confirm(
+        `This exceeds ${team.name}'s remaining ${formatEuros(remaining)} — draft anyway?\n\n` +
+          `${formatEuros(amount)} would leave them at ${formatEuros(remaining - amount)}.`
+      );
+      if (!ok) return;
+    }
+
     const id = selected;
-    setSelected(null);
+    selectPlayer(null);
     try {
       await adminFetch("/api/admin/team-assign", {
         method: "POST",
-        body: JSON.stringify({ registration_id: id, team_id: teamId }),
+        body: JSON.stringify({
+          registration_id: id,
+          team_id: teamId,
+          price: amount,
+        }),
       });
-      patchLocal(id, { team_id: teamId });
+      patchLocal(id, { team_id: teamId, price: amount });
     } catch (e) {
       alert(e instanceof Error ? e.message : "Assign failed.");
       load();
     }
+  }
+
+  // Tapping a team drafts at the typed price; with no price yet it arms the
+  // team so Enter in the price field confirms.
+  function draftTo(teamId: string) {
+    if (parsedPrice === null) {
+      setArmedTeam(teamId);
+      priceRef.current?.focus();
+      return;
+    }
+    assign(teamId, parsedPrice);
   }
 
   async function unassign(id: string) {
@@ -118,9 +183,37 @@ export default function AuctionPage() {
         method: "POST",
         body: JSON.stringify({ registration_id: id, team_id: null }),
       });
-      patchLocal(id, { team_id: null });
+      // Clearing price alongside team_id returns the money to the team: SPENT
+      // is derived from the roster, so REMAINING goes back up immediately.
+      patchLocal(id, { team_id: null, price: null });
     } catch (e) {
       alert(e instanceof Error ? e.message : "Unassign failed.");
+      load();
+    }
+  }
+
+  async function setPurse(id: string, purse: number) {
+    try {
+      await adminFetch(`/api/admin/teams/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ purse }),
+      });
+      setTeams((ts) => ts.map((t) => (t.id === id ? { ...t, purse } : t)));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Budget change failed.");
+      load();
+    }
+  }
+
+  async function applyPurseToAll(purse: number) {
+    try {
+      await adminFetch("/api/admin/teams", {
+        method: "PATCH",
+        body: JSON.stringify({ purse }),
+      });
+      setTeams((ts) => ts.map((t) => ({ ...t, purse })));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Applying the budget failed.");
       load();
     }
   }
@@ -174,12 +267,18 @@ export default function AuctionPage() {
   if (loading) return <p className="font-mono text-sm text-chalk-mut">Loading…</p>;
   if (error) return <p className="text-sm text-red-300">{error}</p>;
 
+  const sel = selected ? byId.get(selected) : undefined;
+
   return (
     <div className="space-y-5">
       <p className="font-mono text-xs text-chalk-mut">
-        Tap a player in the pool, then tap a team to draft them. Tap a drafted
-        player to send them back to the pool.
+        Tap a player in the pool, enter a price, then tap a team to draft them
+        (or tap the team first and press Enter on the price). Tap a drafted
+        player to send them back to the pool and refund their price.
       </p>
+
+      {/* Default budget for all teams */}
+      <PurseAllControl onApply={applyPurseToAll} />
 
       {/* Pool */}
       <div className="rounded-xl border border-turf-line bg-turf-panel p-4">
@@ -207,7 +306,7 @@ export default function AuctionPage() {
                   <PhotoButton p={p} size="h-11 w-11" onZoom={setPhotoOf} />
                   <button
                     type="button"
-                    onClick={() => setSelected(active ? null : p.id)}
+                    onClick={() => selectPlayer(active ? null : p.id)}
                     className="flex flex-col items-start text-left leading-tight"
                   >
                     <span className="font-medium">{p.full_name}</span>
@@ -224,10 +323,60 @@ export default function AuctionPage() {
         )}
       </div>
 
+      {/* Price bar for the selected player — sticks to the top of the viewport
+          so the field stays reachable while scrolling to a team card. */}
+      {sel && (
+        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-accent/40 bg-turf-deep/95 p-3 backdrop-blur">
+          <PhotoButton p={sel} size="h-10 w-10" onZoom={setPhotoOf} />
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate font-medium text-chalk">{sel.full_name}</p>
+            <p className="font-mono text-[10px] text-chalk-mut">
+              {armedTeam
+                ? `Press Enter to draft to ${
+                    teams.find((t) => t.id === armedTeam)?.name ?? "team"
+                  }`
+                : "Enter a price, then tap a team"}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-display text-lg text-accent">€</span>
+            <input
+              ref={priceRef}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && armedTeam && parsedPrice !== null) {
+                  e.preventDefault();
+                  assign(armedTeam, parsedPrice);
+                } else if (e.key === "Escape") {
+                  selectPlayer(null);
+                }
+              }}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
+              placeholder="0"
+              aria-label={`Draft price in euros for ${sel.full_name}`}
+              className="w-24 rounded border border-turf-line bg-turf-panel px-2 py-1.5 text-right font-mono text-base text-chalk focus:border-accent focus:outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => selectPlayer(null)}
+            className="rounded border border-turf-line px-2 py-1 font-mono text-[10px] uppercase text-chalk-mut hover:text-chalk"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* Teams */}
       <div className="grid gap-3 sm:grid-cols-2">
         {teams.map((t) => {
           const roster = rosterOf(t.id);
+          const { spent, remaining } = budgetOf(t);
+          const tone = toneOf(remaining, t.purse);
           const owner = t.owner_registration_id
             ? byId.get(t.owner_registration_id)
             : undefined;
@@ -295,12 +444,80 @@ export default function AuctionPage() {
                 </select>
               </div>
 
+              {/* Budget: REMAINING is the glanceable number. */}
+              <div className="mb-2 flex items-end justify-between gap-2 rounded-lg bg-turf-deep px-2.5 py-2">
+                <div className="font-mono text-[10px] leading-relaxed text-chalk-mut">
+                  <div className="flex items-center gap-1">
+                    <span className="uppercase tracking-widest">Purse</span>
+                    <span className="text-accent">€</span>
+                    <input
+                      defaultValue={t.purse}
+                      key={t.purse} // re-sync the field after "apply to all"
+                      title="Click to edit this team's budget — saves on blur or Enter"
+                      aria-label={`${t.name} budget in euros`}
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      onBlur={(e) => {
+                        // Number("") is 0, so an empty field must be rejected
+                        // explicitly — otherwise clearing it to retype and
+                        // tabbing away would silently zero the team's budget.
+                        const raw = e.target.value.trim();
+                        const v = Number(raw);
+                        if (raw === "" || !Number.isInteger(v) || v < 0) {
+                          e.target.value = String(t.purse); // reject, restore
+                          return;
+                        }
+                        if (v !== t.purse) setPurse(t.id, v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
+                      className="w-16 rounded border border-transparent bg-transparent px-1 py-0.5 text-right font-mono text-xs text-chalk hover:border-turf-line focus:border-accent focus:bg-turf-panel focus:outline-none"
+                    />
+                  </div>
+                  <div className="uppercase tracking-widest">
+                    Spent <span className="text-chalk">{formatEuros(spent)}</span>
+                  </div>
+                </div>
+                <div className="text-right leading-none">
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+                    Remaining
+                  </div>
+                  <div
+                    className={`font-display text-2xl ${TONE_CLASS[tone]}`}
+                    title={
+                      tone === "over"
+                        ? "Over budget"
+                        : tone === "low"
+                          ? "Running low"
+                          : "Healthy"
+                    }
+                  >
+                    {formatEuros(remaining)}
+                  </div>
+                </div>
+              </div>
+
               <button
                 disabled={!selected || full}
-                onClick={() => assign(t.id)}
-                className="mb-2 w-full rounded-md border border-accent/40 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-accent disabled:opacity-30"
+                onClick={() => draftTo(t.id)}
+                className={[
+                  "mb-2 w-full rounded-md border px-2 py-1 font-mono text-[10px] uppercase tracking-widest disabled:opacity-30",
+                  armedTeam === t.id
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-accent/40 text-accent",
+                ].join(" ")}
               >
-                {full ? "Full" : "Draft selected here"}
+                {full
+                  ? "Full"
+                  : parsedPrice !== null
+                    ? `Draft for ${formatEuros(parsedPrice)}`
+                    : "Draft selected here"}
               </button>
 
               {owner && (
@@ -311,7 +528,9 @@ export default function AuctionPage() {
                   {owner.full_name}
                   {!owner.is_playing && (
                     <span className="text-chalk-mut"> (non-playing)</span>
-                  )}
+                  )}{" "}
+                  {/* Owners cost nothing against the purse. */}
+                  <span className="font-mono text-[10px] text-chalk-mut">· free</span>
                 </div>
               )}
 
@@ -325,12 +544,15 @@ export default function AuctionPage() {
                     <button
                       type="button"
                       onClick={() => unassign(p.id)}
-                      title="Tap to remove"
+                      title={`Tap to remove — refunds ${formatEuros(p.price ?? 0)}`}
                       className="flex items-center gap-1.5 rounded hover:text-red-300"
                     >
                       <span>{p.full_name}</span>
                       <span className="font-mono text-[10px] text-chalk-mut">
                         {p.position?.[0] ?? "?"}
+                      </span>
+                      <span className="font-mono text-[10px] text-accent">
+                        {formatEuros(p.price ?? 0)}
                       </span>
                     </button>
                   </div>
@@ -352,6 +574,66 @@ export default function AuctionPage() {
           onClose={() => setPhotoOf(null)}
         />
       )}
+    </div>
+  );
+}
+
+// Sets one default budget across all 8 teams. Per-team overrides live on each
+// card, so this is the "start of auction" control: apply the default first,
+// then tweak individual teams.
+function PurseAllControl({ onApply }: { onApply: (purse: number) => void }) {
+  const [value, setValue] = useState("");
+  const parsed = value.trim() === "" ? null : Number(value);
+  const valid = parsed !== null && Number.isInteger(parsed) && parsed >= 0;
+
+  function apply() {
+    if (!valid) return;
+    if (
+      !confirm(
+        `Set every team's budget to €${parsed}? This overwrites any per-team overrides.`
+      )
+    )
+      return;
+    onApply(parsed);
+    setValue("");
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-turf-line bg-turf-panel p-3">
+      <label
+        htmlFor="purse-all"
+        className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut"
+      >
+        Set all teams&apos; budget
+      </label>
+      <div className="flex items-center gap-1.5">
+        <span className="font-display text-lg text-accent">€</span>
+        <input
+          id="purse-all"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              apply();
+            }
+          }}
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          placeholder="1000"
+          className="w-28 rounded border border-turf-line bg-turf-deep px-2 py-1.5 text-right font-mono text-sm text-chalk focus:border-accent focus:outline-none"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={apply}
+        disabled={!valid}
+        className="rounded-md border border-accent/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-accent hover:bg-accent/10 disabled:opacity-30"
+      >
+        Apply to all
+      </button>
     </div>
   );
 }

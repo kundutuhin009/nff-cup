@@ -4,8 +4,9 @@ import { supabaseAdmin } from "@/lib/supabaseServer";
 
 const MAX_PLAYING_PER_TEAM = 7;
 
-// PATCH: rename a team, change its group (A/B), or set/clear its owner.
-// Used by the auction screen. owner_registration_id: string | null.
+// PATCH: rename a team, change its group (A/B), set/clear its owner, or
+// override its auction purse. Used by the auction screen.
+// owner_registration_id: string | null.
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -17,6 +18,7 @@ export async function PATCH(
     name?: string;
     group_label?: string;
     owner_registration_id?: string | null;
+    purse?: unknown;
   };
   try {
     body = await req.json();
@@ -35,6 +37,19 @@ export async function PATCH(
     if (v !== "A" && v !== "B")
       return NextResponse.json({ error: "Group must be A or B." }, { status: 400 });
     patch.group_label = v;
+  }
+
+  // Purse override for a single team, after "apply to all" set the default.
+  // Overspending is allowed (that's a derived purse - sum(price)), but the
+  // purse itself can't be negative — matches teams_purse_non_negative.
+  if ("purse" in body) {
+    const purse = Number(body.purse);
+    if (!Number.isInteger(purse) || purse < 0)
+      return NextResponse.json(
+        { error: "Purse must be a whole number of euros, 0 or more." },
+        { status: 400 }
+      );
+    patch.purse = purse;
   }
 
   if ("owner_registration_id" in body) {

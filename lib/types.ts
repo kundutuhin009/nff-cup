@@ -37,9 +37,16 @@ export interface Team {
   owner_registration_id: string | null;
 }
 
+// Team + its auction budget. purse is ADMIN-ONLY (anon lacks the column
+// grant), so this shape only ever comes from /api/admin/teams.
+export interface AdminTeam extends Team {
+  purse: number;
+}
+
 export interface TeamPlayer {
   team_id: string;
   registration_id: string;
+  price: number;
 }
 
 export interface Match {
