@@ -110,6 +110,26 @@ export default function AuctionPage() {
     [rosterOf]
   );
 
+  // Projector strip data — the SAME purse/price numbers the team cards render,
+  // just precomputed once per change instead of per card. No extra query or
+  // state: it all falls out of `teams` + `rows`.
+  const overview = useMemo(
+    () => teams.map((t) => ({ team: t, ...budgetOf(t) })),
+    [teams, budgetOf]
+  );
+
+  // Headline totals. "In play" = drafted + still in the pool, so the
+  // denominator only counts players actually up for auction (paid gk/player)
+  // and can never come out below the sold count.
+  const totals = useMemo(() => {
+    const drafted = rows.filter((r) => r.team_id);
+    return {
+      sold: drafted.length,
+      inPlay: drafted.length + pool.length,
+      spent: spentOf(drafted),
+    };
+  }, [rows, pool]);
+
   // The typed price, or null while it isn't a usable whole number of euros.
   const parsedPrice = useMemo(() => {
     if (price.trim() === "") return null;
@@ -271,6 +291,10 @@ export default function AuctionPage() {
 
   return (
     <div className="space-y-5">
+      {/* Read-only scan strip for the room — every team's remaining at a
+          glance. Editing stays on the cards below. */}
+      <BudgetStrip overview={overview} totals={totals} />
+
       <p className="font-mono text-xs text-chalk-mut">
         Tap a player in the pool, enter a price, then tap a team to draft them
         (or tap the team first and press Enter on the price). Tap a drafted
@@ -574,6 +598,47 @@ export default function AuctionPage() {
           onClose={() => setPhotoOf(null)}
         />
       )}
+    </div>
+  );
+}
+
+// Glanceable projector header: one tight cell per team showing REMAINING, in
+// the same colours as the cards. Purely a readout of numbers already derived
+// upstream — it holds no state and issues no fetch, so it can't slow the page.
+function BudgetStrip({
+  overview,
+  totals,
+}: {
+  overview: { team: AdminTeam; spent: number; remaining: number }[];
+  totals: { sold: number; inPlay: number; spent: number };
+}) {
+  if (overview.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-turf-line bg-turf-panel p-2.5">
+      {/* 8 across on a projector, wrapping down to 2 on a phone. */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-8">
+        {overview.map(({ team, remaining }) => (
+          <div
+            key={team.id}
+            className="rounded-md bg-turf-deep px-2 py-1.5 text-center leading-tight"
+            title={`${team.name} — ${formatEuros(remaining)} remaining of ${formatEuros(team.purse)}`}
+          >
+            <div className="truncate font-mono text-[10px] uppercase tracking-wide text-chalk-mut">
+              {team.name}
+            </div>
+            <div
+              className={`font-display text-lg ${TONE_CLASS[toneOf(remaining, team.purse)]}`}
+            >
+              {formatEuros(remaining)}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+        {totals.sold} / {totals.inPlay} sold · {formatEuros(totals.spent)} total
+        spent
+      </p>
     </div>
   );
 }

@@ -7,11 +7,14 @@
 // stored — so they stay correct as players are drafted and removed.
 // =====================================================================
 
-// Display helper: "€120". Mirrors formatRupees in lib/pricing.ts. An overspent
-// team reads "-€150" rather than "€-150", which is what a bare template gives.
+// Display helper: "€120", "€4,200". Mirrors formatRupees in lib/pricing.ts.
+// An overspent team reads "-€150" rather than "€-150", which is what a bare
+// template gives. The locale is pinned rather than left to the browser so the
+// grouping can't drift between machines (and the projector matches the laptop).
 export function formatEuros(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) return "—";
-  return amount < 0 ? `-€${Math.abs(amount)}` : `€${amount}`;
+  const grouped = Math.abs(amount).toLocaleString("en-US");
+  return amount < 0 ? `-€${grouped}` : `€${grouped}`;
 }
 
 // Only drafted gk/player registrations cost money. Owners are FREE — they're
