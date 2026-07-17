@@ -7,6 +7,7 @@ import { StatTile } from "@/components/Panel";
 import { adminFetch } from "@/lib/adminFetch";
 import { supabase } from "@/lib/supabaseClient";
 import { registrationsToCsv } from "@/lib/csv";
+import { buildPhotosZip } from "@/lib/photoZip";
 import { byText, useSortable, type Comparator } from "@/lib/useSortable";
 import {
   FOOD_PREFS,
@@ -31,6 +32,7 @@ export default function MasterTablePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modal, setModal] = useState<{ id: string; name: string } | null>(null);
+  const [zipping, setZipping] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -193,6 +195,25 @@ export default function MasterTablePage() {
     URL.revokeObjectURL(url);
   }
 
+  // Zip every registration photo straight from the base64 already in `rows`,
+  // so this needs no extra fetch or backend route.
+  async function downloadPhotos() {
+    setZipping(true);
+    try {
+      const blob = await buildPhotosZip(rows);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "nff-player-photos.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not build the photo zip.");
+    } finally {
+      setZipping(false);
+    }
+  }
+
   const cellInput =
     "w-full min-w-[7rem] rounded border border-transparent bg-transparent px-1 py-1 text-sm hover:border-turf-line focus:border-accent focus:bg-turf-deep focus:outline-none";
 
@@ -211,12 +232,21 @@ export default function MasterTablePage() {
         <p className="font-mono text-xs text-chalk-mut">
           {rows.length} player{rows.length === 1 ? "" : "s"}
         </p>
-        <button
-          onClick={downloadCsv}
-          className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10"
-        >
-          Download CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadCsv}
+            className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10"
+          >
+            Download CSV
+          </button>
+          <button
+            onClick={downloadPhotos}
+            disabled={zipping}
+            className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {zipping ? "Preparing…" : "Download Photos (ZIP)"}
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
