@@ -29,7 +29,17 @@ interface WheelPlayer {
   id: string;
   name: string;
   photo: string | null;
+  position: string | null;
 }
+
+// Position tint for the reveal pill — reads at a glance on a shared screen.
+// Falls back to muted chalk for an unknown/null position.
+const POSITION_PILL: Record<string, string> = {
+  Goalkeeper: "bg-amber-400/15 text-amber-300 border-amber-400/40",
+  Defender: "bg-sky-400/15 text-sky-300 border-sky-400/40",
+  Midfielder: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40",
+  Forward: "bg-rose-400/15 text-rose-300 border-rose-400/40",
+};
 
 // Alternating segment fills (turf greens); the winning slice under the pointer
 // is highlighted amber at render time.
@@ -74,7 +84,12 @@ export default function WheelPage() {
         const players = registrations
           .filter((r) => r.reg_type === "gk" || r.reg_type === "player")
           .filter((r) => !marquee.has(norm(r.full_name)))
-          .map((r) => ({ id: r.id, name: r.full_name, photo: r.photo_base64 }));
+          .map((r) => ({
+            id: r.id,
+            name: r.full_name,
+            photo: r.photo_base64,
+            position: r.position,
+          }));
         setAll(players);
         setRemaining(players);
       } catch (e) {
@@ -178,7 +193,7 @@ export default function WheelPage() {
         </p>
       </div>
 
-      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_34rem]">
         {/* Wheel */}
         <div className="mx-auto w-full max-w-[36rem]">
           {n === 0 ? (
@@ -228,7 +243,9 @@ export default function WheelPage() {
               <p className="font-mono text-[10px] uppercase tracking-widest text-accent">
                 Up next
               </p>
-              <div className="mx-auto mt-3 aspect-square w-48 overflow-hidden rounded-xl bg-turf-deep">
+              {/* Sized off viewport height so the face is big on a shared
+                  screen, capped so the card never forces the page to scroll. */}
+              <div className="relative mx-auto mt-3 aspect-square w-[min(56vh,30rem)] max-w-full overflow-hidden rounded-xl bg-turf-deep">
                 {result.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -237,14 +254,33 @@ export default function WheelPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center font-display text-5xl text-turf-line">
+                  <div className="flex h-full w-full items-center justify-center font-display text-7xl text-turf-line">
                     {result.name.charAt(0).toUpperCase()}
                   </div>
                 )}
+                {/* Static sponsor badge, pinned to a corner over the photo.
+                    Swap /friends-fm-919.svg for the official logo at the same
+                    path — no code change needed. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/friends-fm-919.svg"
+                  alt="Friends FM 91.9"
+                  className="absolute bottom-2 right-2 w-[30%] max-w-[8.5rem] rounded-md shadow-md"
+                />
               </div>
-              <p className="mt-4 font-display text-3xl font-bold uppercase leading-tight tracking-wide text-chalk">
+              <p className="mt-4 font-display text-4xl font-bold uppercase leading-tight tracking-wide text-chalk">
                 {result.name}
               </p>
+              {result.position && (
+                <span
+                  className={`mt-3 inline-block rounded-full border px-4 py-1 font-display text-base uppercase tracking-wide ${
+                    POSITION_PILL[result.position] ??
+                    "border-turf-line bg-turf-deep text-chalk-mut"
+                  }`}
+                >
+                  {result.position}
+                </span>
+              )}
             </>
           ) : (
             <p className="py-16 font-display text-lg uppercase tracking-wide text-chalk-mut">
