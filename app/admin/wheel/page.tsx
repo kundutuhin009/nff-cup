@@ -46,6 +46,26 @@ const POSITION_PILL: Record<string, string> = {
 const SLICE_A = "#11281a"; // turf-panel
 const SLICE_B = "#0c1f14"; // turf-deep
 
+// GKs can be auctioned in their own round, so the wheel can scope to a subset.
+// A keeper is defined by position, not reg_type, per the spec.
+type WheelMode = "outfield" | "gk" | "all";
+const DEFAULT_MODE: WheelMode = "outfield"; // GK round is explicitly separate now
+
+const isGoalkeeper = (p: WheelPlayer) => p.position === "Goalkeeper";
+
+function subsetFor(players: WheelPlayer[], mode: WheelMode): WheelPlayer[] {
+  if (mode === "gk") return players.filter(isGoalkeeper);
+  if (mode === "outfield") return players.filter((p) => !isGoalkeeper(p));
+  return players;
+}
+
+const MODE_LABEL: Record<WheelMode, string> = {
+  outfield: "Outfield",
+  gk: "Goalkeepers",
+  all: "All",
+};
+const MODE_ORDER: WheelMode[] = ["outfield", "gk", "all"];
+
 const TAU = Math.PI * 2;
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -56,9 +76,11 @@ function rimPoint(cx: number, cy: number, r: number, deg: number) {
 }
 
 export default function WheelPage() {
-  // Seeded once from the loaded players; `remaining` is the live wheel.
+  // `all` = the full 44 (loaded once); `remaining` is the live wheel for the
+  // active `mode`. Each mode selection loads that mode's set fresh.
   const [all, setAll] = useState<WheelPlayer[]>([]);
   const [remaining, setRemaining] = useState<WheelPlayer[]>([]);
+  const [mode, setMode] = useState<WheelMode>(DEFAULT_MODE);
   const [result, setResult] = useState<WheelPlayer | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -91,7 +113,8 @@ export default function WheelPage() {
             position: r.position,
           }));
         setAll(players);
-        setRemaining(players);
+        // Start in the default mode's set, not the whole 44.
+        setRemaining(subsetFor(players, DEFAULT_MODE));
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : "Failed to load.");
       } finally {
@@ -160,7 +183,37 @@ export default function WheelPage() {
     rafRef.current = requestAnimationFrame(step);
   }, [spinning, n, seg, finish]);
 
-  // "Called up" — drop the revealed player and ready the next spin.
+  // Per-mode totals, derived from the loaded data so they stay correct if a
+  // registration changes (never hardcoded 36/8/44).
+  const counts = useMemo(
+    () => ({
+      outfield: all.filter((p) => !isGoalkeeper(p)).length,
+      gk: all.filter(isGoalkeeper).length,
+      all: all.length,
+    }),
+    [all]
+  );
+
+  // Recenter the wheel to angle 0 and clear the current reveal.
+  const recenter = useCallback(() => {
+    setResult(null);
+    setPointerIdx(null);
+    rotationRef.current = 0;
+    wheelRef.current?.setAttribute("transform", "rotate(0 300 300)");
+  }, []);
+
+  // Selecting a mode loads that set fresh — a reset scoped to the new mode.
+  const loadMode = useCallback(
+    (next: WheelMode) => {
+      if (spinning) return;
+      setMode(next);
+      setRemaining(subsetFor(all, next));
+      recenter();
+    },
+    [all, spinning, recenter]
+  );
+
+  // "Called up" — drop the revealed player from the current mode's wheel.
   const done = useCallback(() => {
     if (!result) return;
     setRemaining((rs) => rs.filter((p) => p.id !== result.id));
@@ -168,15 +221,15 @@ export default function WheelPage() {
     setPointerIdx(null);
   }, [result]);
 
+  // Restore the CURRENT mode's full set (does not change mode).
   const reset = useCallback(() => {
     if (spinning) return;
-    if (!confirm(`Reset the wheel to all ${all.length} players?`)) return;
-    setRemaining(all);
-    setResult(null);
-    setPointerIdx(null);
-    rotationRef.current = 0;
-    wheelRef.current?.setAttribute("transform", "rotate(0 300 300)");
-  }, [all, spinning]);
+    const full = subsetFor(all, mode);
+    if (!confirm(`Reset the wheel to all ${full.length} ${MODE_LABEL[mode].toLowerCase()} players?`))
+      return;
+    setRemaining(full);
+    recenter();
+  }, [all, mode, spinning, recenter]);
 
   if (loading)
     return <p className="font-mono text-sm text-chalk-mut">Loading…</p>;
@@ -189,8 +242,31 @@ export default function WheelPage() {
           Who&apos;s Next
         </h2>
         <p className="font-mono text-xs text-chalk-mut">
-          {n} of {all.length} remaining
+          {n} of {counts[mode]} remaining
         </p>
+      </div>
+
+      {/* Round selector — loads that mode's set fresh onto the wheel. */}
+      <div className="flex flex-wrap gap-2">
+        {MODE_ORDER.map((m) => {
+          const active = m === mode;
+          return (
+            <button
+              key={m}
+              onClick={() => loadMode(m)}
+              disabled={spinning}
+              aria-pressed={active}
+              className={[
+                "rounded-md px-4 py-2 font-display text-sm uppercase tracking-wide disabled:opacity-40",
+                active
+                  ? "bg-accent text-turf-deep"
+                  : "bg-turf-panel text-chalk hover:text-accent",
+              ].join(" ")}
+            >
+              {MODE_LABEL[m]} ({counts[m]})
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_34rem]">
