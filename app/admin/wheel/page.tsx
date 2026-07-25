@@ -259,13 +259,13 @@ export default function WheelPage() {
                   </div>
                 )}
                 {/* Static sponsor badge, pinned to a corner over the photo.
-                    Swap /friends-fm-919.svg for the official logo at the same
-                    path — no code change needed. */}
+                    Transparent-background logo on a white chip so it stays
+                    legible over any photo. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/friends-fm-919.svg"
+                  src="/friends-fm-919.png"
                   alt="Friends FM 91.9"
-                  className="absolute bottom-2 right-2 w-[30%] max-w-[8.5rem] rounded-md shadow-md"
+                  className="absolute bottom-2 right-2 w-[38%] max-w-[11rem] rounded-md bg-white/95 p-1 shadow-md"
                 />
               </div>
               <p className="mt-4 font-display text-4xl font-bold uppercase leading-tight tracking-wide text-chalk">
