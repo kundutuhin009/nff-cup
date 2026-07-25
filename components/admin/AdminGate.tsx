@@ -13,6 +13,7 @@ import {
 const ADMIN_LINKS = [
   { href: "/admin", label: "Players" },
   { href: "/admin/auction", label: "Auction" },
+  { href: "/admin/wheel", label: "Wheel" },
   { href: "/admin/results", label: "Results" },
   { href: "/admin/updates", label: "Updates" },
 ];
