@@ -76,10 +76,13 @@ function rimPoint(cx: number, cy: number, r: number, deg: number) {
 }
 
 export default function WheelPage() {
-  // `all` = the full 44 (loaded once); `remaining` is the live wheel for the
-  // active `mode`. Each mode selection loads that mode's set fresh.
+  // `all` = the full 44 (loaded once). Each mode keeps its OWN remaining list
+  // so switching modes just displays that list — it never rebuilds or resets
+  // it. Marking someone DONE in one mode leaves the other two lists untouched.
   const [all, setAll] = useState<WheelPlayer[]>([]);
-  const [remaining, setRemaining] = useState<WheelPlayer[]>([]);
+  const [remainingByMode, setRemainingByMode] = useState<
+    Record<WheelMode, WheelPlayer[]>
+  >({ outfield: [], gk: [], all: [] });
   const [mode, setMode] = useState<WheelMode>(DEFAULT_MODE);
   const [result, setResult] = useState<WheelPlayer | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -113,8 +116,12 @@ export default function WheelPage() {
             position: r.position,
           }));
         setAll(players);
-        // Start in the default mode's set, not the whole 44.
-        setRemaining(subsetFor(players, DEFAULT_MODE));
+        // Seed all three lists once; each tracks its own removals thereafter.
+        setRemainingByMode({
+          outfield: subsetFor(players, "outfield"),
+          gk: subsetFor(players, "gk"),
+          all: subsetFor(players, "all"),
+        });
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : "Failed to load.");
       } finally {
@@ -127,6 +134,8 @@ export default function WheelPage() {
     };
   }, []);
 
+  // The active mode's list drives the wheel.
+  const remaining = remainingByMode[mode];
   const n = remaining.length;
   const seg = n > 0 ? 360 / n : 0;
 
@@ -202,32 +211,37 @@ export default function WheelPage() {
     wheelRef.current?.setAttribute("transform", "rotate(0 300 300)");
   }, []);
 
-  // Selecting a mode loads that set fresh — a reset scoped to the new mode.
+  // Switching mode just DISPLAYS that mode's existing list — it does NOT
+  // rebuild or reset it, so progress in each round is preserved. Only the
+  // transient reveal/rotation are cleared (they belonged to the old mode).
   const loadMode = useCallback(
     (next: WheelMode) => {
-      if (spinning) return;
+      if (spinning || next === mode) return;
       setMode(next);
-      setRemaining(subsetFor(all, next));
       recenter();
     },
-    [all, spinning, recenter]
+    [mode, spinning, recenter]
   );
 
-  // "Called up" — drop the revealed player from the current mode's wheel.
+  // "Called up" — drop the revealed player from the ACTIVE mode's list only.
   const done = useCallback(() => {
     if (!result) return;
-    setRemaining((rs) => rs.filter((p) => p.id !== result.id));
+    setRemainingByMode((m) => ({
+      ...m,
+      [mode]: m[mode].filter((p) => p.id !== result.id),
+    }));
     setResult(null);
     setPointerIdx(null);
-  }, [result]);
+  }, [result, mode]);
 
-  // Restore the CURRENT mode's full set (does not change mode).
+  // Restore the ACTIVE mode's list to its full original set. Does not switch
+  // modes and does not touch the other two lists.
   const reset = useCallback(() => {
     if (spinning) return;
     const full = subsetFor(all, mode);
     if (!confirm(`Reset the wheel to all ${full.length} ${MODE_LABEL[mode].toLowerCase()} players?`))
       return;
-    setRemaining(full);
+    setRemainingByMode((m) => ({ ...m, [mode]: full }));
     recenter();
   }, [all, mode, spinning, recenter]);
 
