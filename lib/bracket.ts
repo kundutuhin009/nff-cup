@@ -157,28 +157,35 @@ export function autoFillPatches(teams: Team[], matches: Match[]): SlotPatch[] {
   return patches;
 }
 
-// The 6 rows for a fresh bracket. Standings-fed slots are seeded now;
-// winner/loser slots start empty and fill in as feeders are played.
-export function seedRows(
-  teams: Team[],
-  matches: Match[]
-): Array<{
-  stage: "knockout";
-  round_label: RoundLabel;
+export interface Slots {
   home_team_id: string | null;
   away_team_id: string | null;
-}> {
-  // Seed from the GROUP table only. Re-seeding wipes the old knockout rows, so
-  // winner/loser sources have no feeder yet and deliberately start empty —
-  // they fill in later via autoFillPatches() as results come in.
-  const groupOnly = matches.filter((m) => m.stage === "group");
-  const seed = (s: SlotSource) =>
-    s.kind === "standing" ? resolveSlot(s, teams, groupOnly) : null;
+}
 
-  return BRACKET.map((meta) => ({
-    stage: "knockout" as const,
-    round_label: meta.round,
-    home_team_id: seed(meta.home),
-    away_team_id: seed(meta.away),
-  }));
+// Slots every round SHOULD hold for a (re)seed.
+//
+// `preserved` are the already-played knockout matches the caller is keeping.
+// They stay in the resolution context, so a played tie still feeds its
+// winner/loser into the dependent rounds being reseeded — preserving results
+// must not break propagation. On a first seed `preserved` is empty and the
+// winner/loser slots resolve to null, filling in later as ties are played.
+export function reseedSlots(
+  teams: Team[],
+  matches: Match[],
+  preserved: Match[]
+): Record<RoundLabel, Slots> {
+  const context = [
+    ...matches.filter((m) => m.stage === "group"),
+    ...preserved,
+  ];
+
+  return Object.fromEntries(
+    BRACKET.map((meta) => [
+      meta.round,
+      {
+        home_team_id: resolveSlot(meta.home, teams, context),
+        away_team_id: resolveSlot(meta.away, teams, context),
+      },
+    ])
+  ) as Record<RoundLabel, Slots>;
 }

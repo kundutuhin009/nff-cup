@@ -88,9 +88,10 @@ export default function ResultsPage() {
     if (
       knockoutMatches.length > 0 &&
       !confirm(
-        "Re-seed the knockout bracket from current standings?\n\n" +
-          "This DELETES the 6 existing knockout matches — including their " +
-          "scores, scorers and any manual team picks — and rebuilds them."
+        "Re-seed unplayed knockout slots from current standings?\n\n" +
+          "Matches already played keep their results and won't be changed. " +
+          "Unplayed ties have their teams recomputed, which clears any manual " +
+          "pick on them."
       )
     )
       return;
@@ -203,7 +204,14 @@ export default function ResultsPage() {
         <p className="mt-1 text-sm text-chalk-mut">
           These are <span className="text-chalk">defaults</span>: every slot
           stays editable per match below, and a manual pick is never
-          overwritten by auto-fill — only by re-seeding here.
+          overwritten by auto-fill — only by re-seeding that tie.
+        </p>
+        <p className="mt-1 text-sm text-chalk-mut">
+          Re-seeding is safe once play starts:{" "}
+          <span className="text-chalk">
+            ties already played keep their result, scorers and MOTM
+          </span>{" "}
+          and are never rebuilt — only unplayed slots are refreshed.
         </p>
         <button
           onClick={seedBracket}
