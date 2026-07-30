@@ -14,6 +14,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
+// Next patches global fetch and caches GETs in its data cache (.next/cache/
+// fetch-cache). Each Supabase read is a separate fetch with its own cache
+// entry, so `teams` and `matches` could be served at DIFFERENT ages — e.g. a
+// fresh teams list against stale matches, which renders group fixtures under
+// the wrong group heading. Opt every public read out of that cache; the pages
+// are already `force-dynamic`.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false },
+  global: {
+    fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+  },
 });
