@@ -59,6 +59,11 @@ export async function PATCH(
   if ("played" in body) patch.played = Boolean(body.played);
   if ("motm_registration_id" in body)
     patch.motm_registration_id = body.motm_registration_id || null;
+  // Free-text kickoff time; blank clears it back to "no time set".
+  if ("match_time" in body) {
+    const t = typeof body.match_time === "string" ? body.match_time.trim() : "";
+    patch.match_time = t === "" ? null : t.slice(0, 20);
+  }
 
   if (Object.keys(patch).length > 0) {
     const { error } = await supabaseAdmin

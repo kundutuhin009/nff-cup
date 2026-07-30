@@ -69,6 +69,9 @@ export interface Match {
   away_score: number;
   played: boolean;
   motm_registration_id: string | null;
+  // Optional kickoff time, free text ("2:30 PM"). Single-day event, so there's
+  // no date and no timezone — it renders exactly as the admin typed it.
+  match_time: string | null;
 }
 
 export interface MatchPlayerStat {

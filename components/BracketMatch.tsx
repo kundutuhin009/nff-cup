@@ -1,3 +1,4 @@
+import MatchTime from "@/components/MatchTime";
 import type { RoundMeta, Track } from "@/lib/bracket";
 import type { Match } from "@/lib/types";
 
@@ -29,13 +30,16 @@ export default function BracketMatch({
           : "border-turf-line"
       }`}
     >
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <span
-          className={`font-display text-sm uppercase tracking-wide ${
-            meta.track === "gold" ? "text-accent" : "text-chalk"
-          }`}
-        >
-          {meta.title}
+      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+        <span className="flex items-center gap-2">
+          <span
+            className={`font-display text-sm uppercase tracking-wide ${
+              meta.track === "gold" ? "text-accent" : "text-chalk"
+            }`}
+          >
+            {meta.title}
+          </span>
+          <MatchTime time={match?.match_time} />
         </span>
         <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
           {meta.subtitle}

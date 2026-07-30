@@ -130,6 +130,11 @@ export default function ResultsPage() {
             <span className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
               {label}
             </span>
+            {m.match_time?.trim() && (
+              <span className="ml-2 font-mono text-[10px] font-bold tabular-nums text-accent">
+                {m.match_time}
+              </span>
+            )}
             <br />
             {slotText(m, "home", meta)}{" "}
             <span className="font-mono text-accent">

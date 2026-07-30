@@ -27,6 +27,7 @@ export default function MatchEditor({
   const [homeScore, setHomeScore] = useState(match.home_score);
   const [awayScore, setAwayScore] = useState(match.away_score);
   const [played, setPlayed] = useState(match.played);
+  const [matchTime, setMatchTime] = useState(match.match_time ?? "");
   const [motm, setMotm] = useState(match.motm_registration_id ?? "");
   const [stats, setStats] = useState<Record<string, { goals: number; assists: number }>>({});
   const [saving, setSaving] = useState(false);
@@ -77,6 +78,7 @@ export default function MatchEditor({
           home_score: homeScore,
           away_score: awayScore,
           played,
+          match_time: matchTime,
           motm_registration_id: motm || null,
           stats: statRows,
         }),
@@ -169,6 +171,20 @@ export default function MatchEditor({
             className="h-4 w-4 accent-accent"
           />
           Played
+        </label>
+        {/* Kickoff time — free text, blank means "no time set". */}
+        <label className="flex items-center gap-2 text-sm">
+          <span className="font-mono text-[10px] uppercase text-chalk-mut">
+            Time
+          </span>
+          <input
+            type="text"
+            value={matchTime}
+            onChange={(e) => setMatchTime(e.target.value)}
+            placeholder="e.g. 2:30 PM"
+            maxLength={20}
+            className="w-28 rounded border border-turf-line bg-turf-deep px-2 py-1 font-mono text-sm"
+          />
         </label>
       </div>
 
