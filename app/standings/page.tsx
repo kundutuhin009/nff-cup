@@ -16,7 +16,8 @@ export default async function StandingsPage() {
         Standings
       </h1>
       <p className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
-        Top 2 of each group advance · Win 3 · Draw 1
+        <span className="text-accent">Top 2 → Gold semis</span> · 3rd → Silver
+        qualifier · 4th out · Win 3 · Draw 1
       </p>
 
       <Panel>

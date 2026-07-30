@@ -124,6 +124,21 @@ export function resolveSlot(
   return source.kind === "winner" ? winner : loser;
 }
 
+export interface Outcome {
+  winner: string | null;
+  runnerUp: string | null;
+}
+
+// Who lifted a trophy. Both sides stay null until the final has actually been
+// played with a decisive score — never guess a champion from a pending or
+// drawn tie.
+export function finalOutcome(matches: Match[], round: RoundLabel): Outcome {
+  return {
+    winner: resolveSlot({ kind: "winner", from: round, label: "" }, [], matches),
+    runnerUp: resolveSlot({ kind: "loser", from: round, label: "" }, [], matches),
+  };
+}
+
 export interface SlotPatch {
   id: string;
   home_team_id?: string;

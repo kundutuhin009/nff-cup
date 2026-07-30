@@ -1,4 +1,5 @@
 import BracketMatch, { TrackHeading } from "@/components/BracketMatch";
+import Champions from "@/components/Champions";
 import MatchRow from "@/components/MatchRow";
 import { Panel, PanelTitle } from "@/components/Panel";
 import StandingsTable from "@/components/StandingsTable";
@@ -30,6 +31,9 @@ export default async function FixturesPage() {
       <h1 className="font-display text-3xl font-bold uppercase tracking-wide text-accent">
         Fixtures
       </h1>
+
+      {/* Trophies — headline result, sits above the bracket it comes from */}
+      <Champions matches={matches} teamName={teamName} />
 
       {/* Standings */}
       <div className="grid gap-4 sm:grid-cols-2">
