@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
+import { autoFillKnockout } from "@/lib/knockoutSeed";
 import { supabaseAdmin } from "@/lib/supabaseServer";
 
 // GET: a single match plus its per-player stats (for the results editor).
@@ -94,6 +95,16 @@ export async function PATCH(
       if (insErr)
         return NextResponse.json({ error: insErr.message }, { status: 500 });
     }
+  }
+
+  // A saved result can decide a knockout feeder (or move the group table), so
+  // push any newly-resolved teams into still-empty bracket slots. Best-effort:
+  // the save itself has already succeeded, so a propagation hiccup must not
+  // turn it into an error.
+  try {
+    await autoFillKnockout();
+  } catch {
+    // Ignored — the admin can re-save or re-seed to retry.
   }
 
   return NextResponse.json({ ok: true });

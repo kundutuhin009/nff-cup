@@ -3,25 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import MatchEditor from "@/components/admin/MatchEditor";
 import { adminFetch } from "@/lib/adminFetch";
+import { BRACKET_BY_ROUND, goldRounds, silverRounds } from "@/lib/bracket";
+import type { RoundMeta } from "@/lib/bracket";
 import { supabase } from "@/lib/supabaseClient";
-import {
-  ROUND_LABELS,
-  type Match,
-  type Registration,
-  type RoundLabel,
-  type Team,
-} from "@/lib/types";
+import type { Match, Registration, Team } from "@/lib/types";
 
 interface AdminRow extends Registration {
   team_id: string | null;
 }
-
-const ROUND_TITLES: Record<RoundLabel, string> = {
-  SF1: "Semi-final 1 (A1 v B2)",
-  SF2: "Semi-final 2 (B1 v A2)",
-  "3RD": "3rd-place playoff",
-  FINAL: "Final",
-};
 
 export default function ResultsPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -31,7 +20,6 @@ export default function ResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [newRound, setNewRound] = useState<RoundLabel>("SF1");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,16 +84,22 @@ export default function ResultsPage() {
     }
   }
 
-  async function addKnockout() {
+  async function seedBracket() {
+    if (
+      knockoutMatches.length > 0 &&
+      !confirm(
+        "Re-seed the knockout bracket from current standings?\n\n" +
+          "This DELETES the 6 existing knockout matches — including their " +
+          "scores, scorers and any manual team picks — and rebuilds them."
+      )
+    )
+      return;
     setBusy(true);
     try {
-      await adminFetch("/api/admin/matches", {
-        method: "POST",
-        body: JSON.stringify({ round_label: newRound }),
-      });
+      await adminFetch("/api/admin/knockout/seed", { method: "POST" });
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Add failed.");
+      alert(e instanceof Error ? e.message : "Seed failed.");
     } finally {
       setBusy(false);
     }
@@ -114,7 +108,16 @@ export default function ResultsPage() {
   if (loading) return <p className="font-mono text-sm text-chalk-mut">Loading…</p>;
   if (error) return <p className="text-sm text-red-300">{error}</p>;
 
-  function renderMatch(m: Match, label: string) {
+  // An empty knockout slot shows where its team will come from, so the admin
+  // can see what's still waiting on a result before opening the editor.
+  function slotText(m: Match, side: "home" | "away", meta?: RoundMeta) {
+    const id = side === "home" ? m.home_team_id : m.away_team_id;
+    if (id) return teamName(id);
+    if (!meta) return "TBD";
+    return `TBD · ${(side === "home" ? meta.home : meta.away).label}`;
+  }
+
+  function renderMatch(m: Match, label: string, meta?: RoundMeta) {
     const isOpen = open === m.id;
     return (
       <div key={m.id} className="rounded-lg border border-turf-line bg-turf-panel p-3">
@@ -127,11 +130,11 @@ export default function ResultsPage() {
               {label}
             </span>
             <br />
-            {teamName(m.home_team_id)}{" "}
+            {slotText(m, "home", meta)}{" "}
             <span className="font-mono text-accent">
               {m.played ? `${m.home_score}–${m.away_score}` : "vs"}
             </span>{" "}
-            {teamName(m.away_team_id)}
+            {slotText(m, "away", meta)}
           </span>
           <span className="font-mono text-xs text-chalk-mut">
             {isOpen ? "▲" : "▼"}
@@ -186,43 +189,67 @@ export default function ResultsPage() {
         );
       })}
 
-      {/* Knockouts */}
+      {/* Knockout bracket seeding */}
       <div className="rounded-xl border border-turf-line bg-turf-panel p-4">
         <h2 className="font-display text-lg uppercase tracking-wide text-accent">
-          Add Knockout Match
+          Knockout Bracket
         </h2>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <select
-            value={newRound}
-            onChange={(e) => setNewRound(e.target.value as RoundLabel)}
-            className="rounded border border-turf-line bg-turf-deep px-2 py-1 text-sm"
-          >
-            {ROUND_LABELS.map((r) => (
-              <option key={r} value={r}>
-                {ROUND_TITLES[r]}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={addKnockout}
-            disabled={busy}
-            className="rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10 disabled:opacity-50"
-          >
-            Add
-          </button>
-        </div>
+        <p className="mt-1 text-sm text-chalk-mut">
+          Builds the 6 knockout matches — GOLD (2 semis + final) and SILVER
+          (2 qualifiers + final) — seeding A1 v B2, B1 v A2, and A3 / B3 from
+          the current group table. Loser- and winner-fed slots fill in
+          automatically once their feeder match is played.
+        </p>
+        <p className="mt-1 text-sm text-chalk-mut">
+          These are <span className="text-chalk">defaults</span>: every slot
+          stays editable per match below, and a manual pick is never
+          overwritten by auto-fill — only by re-seeding here.
+        </p>
+        <button
+          onClick={seedBracket}
+          disabled={busy}
+          className="mt-3 rounded-md border border-accent/40 px-3 py-1.5 font-display text-sm uppercase tracking-wide text-accent hover:bg-accent/10 disabled:opacity-50"
+        >
+          {knockoutMatches.length > 0 ? "Re-seed bracket" : "Seed bracket"}
+        </button>
       </div>
 
-      {knockoutMatches.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="font-display text-base uppercase tracking-wide text-chalk">
-            Knockouts
-          </h3>
-          {knockoutMatches.map((m) =>
-            renderMatch(m, ROUND_TITLES[m.round_label as RoundLabel] ?? "Knockout")
-          )}
-        </div>
-      )}
+      {knockoutMatches.length > 0 &&
+        (
+          [
+            ["GOLD", "Main trophy", goldRounds()],
+            ["SILVER", "Consolation trophy", silverRounds()],
+          ] as const
+        ).map(([heading, blurb, rounds]) => (
+          <div key={heading} className="space-y-2">
+            <h3 className="font-display text-base uppercase tracking-widest text-chalk">
+              {heading}{" "}
+              <span className="font-mono text-[10px] tracking-widest text-chalk-mut">
+                · {blurb}
+              </span>
+            </h3>
+            {rounds.map((meta) => {
+              const m = knockoutMatches.find(
+                (k) => k.round_label === meta.round
+              );
+              return m ? (
+                renderMatch(m, `${meta.title} · ${meta.subtitle}`, meta)
+              ) : (
+                <p
+                  key={meta.round}
+                  className="rounded-lg border border-dashed border-turf-line px-3 py-2 text-sm text-chalk-mut"
+                >
+                  {meta.title} — not seeded yet.
+                </p>
+              );
+            })}
+          </div>
+        ))}
+
+      {/* Any knockout row whose label isn't part of the current bracket. */}
+      {knockoutMatches
+        .filter((m) => !m.round_label || !BRACKET_BY_ROUND[m.round_label])
+        .map((m) => renderMatch(m, "Unrecognised knockout round"))}
     </div>
   );
 }

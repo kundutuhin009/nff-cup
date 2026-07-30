@@ -1,19 +1,13 @@
+import BracketMatch, { TrackHeading } from "@/components/BracketMatch";
 import MatchRow from "@/components/MatchRow";
 import { Panel, PanelTitle } from "@/components/Panel";
 import StandingsTable from "@/components/StandingsTable";
+import { goldRounds, silverRounds } from "@/lib/bracket";
 import { getMatches, getTeams } from "@/lib/publicData";
 import { standingsByGroup } from "@/lib/standings";
 import type { Match, RoundLabel } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const ROUND_TITLES: Record<RoundLabel, string> = {
-  SF1: "Semi-final 1 · A1 vs B2",
-  SF2: "Semi-final 2 · B1 vs A2",
-  "3RD": "3rd-place playoff",
-  FINAL: "Final",
-};
-const ROUND_ORDER: RoundLabel[] = ["SF1", "SF2", "3RD", "FINAL"];
 
 export default async function FixturesPage() {
   const [teams, matches] = await Promise.all([getTeams(), getMatches()]);
@@ -72,30 +66,43 @@ export default async function FixturesPage() {
         })}
       </div>
 
-      {/* Knockout bracket */}
+      {/* Knockout bracket — two tracks */}
       <Panel>
         <PanelTitle>Knockout Bracket</PanelTitle>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {ROUND_ORDER.map((r) => {
-            const m = knockoutByRound(r);
-            return (
-              <div
-                key={r}
-                className="rounded-lg border border-turf-line bg-turf-deep/50 p-3"
-              >
-                <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
-                  {ROUND_TITLES[r]}
-                </div>
-                {m ? (
-                  <MatchRow match={m} teamName={teamName} />
-                ) : (
-                  <div className="py-2.5 text-center text-sm text-chalk-mut">
-                    Awaiting teams
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <TrackHeading track="gold">Gold</TrackHeading>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+              Main trophy
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {goldRounds().map((meta) => (
+                <BracketMatch
+                  key={meta.round}
+                  meta={meta}
+                  match={knockoutByRound(meta.round)}
+                  teamName={teamName}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <TrackHeading track="silver">Silver</TrackHeading>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-chalk-mut">
+              Consolation trophy
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {silverRounds().map((meta) => (
+                <BracketMatch
+                  key={meta.round}
+                  meta={meta}
+                  match={knockoutByRound(meta.round)}
+                  teamName={teamName}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </Panel>
     </main>

@@ -4,7 +4,9 @@ export type Position = "Goalkeeper" | "Defender" | "Midfielder" | "Forward";
 export type FoodPref = "Veg" | "Non-Veg";
 export type GroupLabel = "A" | "B";
 export type Stage = "group" | "knockout";
-export type RoundLabel = "SF1" | "SF2" | "3RD" | "FINAL";
+// Dual-track knockout: GOLD (semis + final) and SILVER (qualifiers + final).
+// Bracket structure and slot sources live in lib/bracket.ts.
+export type RoundLabel = "GSF1" | "GSF2" | "GFINAL" | "SQ1" | "SQ2" | "SFINAL";
 
 // Registration type drives the fee and auction behaviour (distinct from the
 // football `position`). Fee amounts live in lib/pricing.ts.
@@ -20,7 +22,14 @@ export const POSITIONS: Position[] = [
 // the gk tier).
 export const PLAYER_POSITIONS: Position[] = ["Defender", "Midfielder", "Forward"];
 export const FOOD_PREFS: FoodPref[] = ["Veg", "Non-Veg"];
-export const ROUND_LABELS: RoundLabel[] = ["SF1", "SF2", "3RD", "FINAL"];
+export const ROUND_LABELS: RoundLabel[] = [
+  "GSF1",
+  "GSF2",
+  "GFINAL",
+  "SQ1",
+  "SQ2",
+  "SFINAL",
+];
 
 export const REG_TYPES: RegType[] = ["owner", "gk", "player"];
 export const REG_TYPE_LABELS: Record<RegType, string> = {
